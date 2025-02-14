@@ -4,7 +4,7 @@ import math
 
 # Set page config
 st.set_page_config(
-    page_title="Hive Thermal Dashboard",
+    page_title="ECONECTAR Hive Thermal Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
