@@ -71,34 +71,26 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c):
     wood_resistance = (params['wood_thickness'] / 100) / params['wood_thermal_conductivity']
     total_resistance = wood_resistance + params['air_film_resistance_outside']
     
-    # Temperature calculation with convergence
-    lower_bound = ambient_temp_k
-    upper_bound = ideal_temp_k
-    tolerance = 0.01
-    
-    while (upper_bound - lower_bound) > tolerance:
-        estimated_temp_k = (lower_bound + upper_bound) / 2
-        heat_transfer = calculate_heat_transfer(
-            estimated_temp_k, 
-            ambient_temp_k, 
-            total_surface_area, 
-            total_resistance
+    # Set initial hive temperature based on ambient conditions
+    if ambient_temp_c >= params['ideal_hive_temperature']:
+        # If ambient is above ideal, bees will try to cool the hive
+        # Temperature will be slightly above ambient but not more than 2-3°C
+        cooling_effort = 1.0 - min(1.0, (ambient_temp_c - params['ideal_hive_temperature']) / 15)
+        temp_increase = 3.0 * cooling_effort
+        estimated_temp_c = ambient_temp_c + temp_increase
+    else:
+        # If ambient is below ideal, bees will try to warm the hive
+        heat_contribution = min(
+            params['ideal_hive_temperature'] - ambient_temp_c,
+            (colony_metabolic_heat * total_resistance) / total_surface_area
         )
-        
-        if heat_transfer > colony_metabolic_heat:
-            upper_bound = estimated_temp_k
-        else:
-            lower_bound = estimated_temp_k
+        estimated_temp_c = ambient_temp_c + heat_contribution
     
-    # Convert final temperature back to Celsius
-    estimated_hive_temp_c = estimated_temp_k - 273.15
+    # Ensure temperature stays within realistic bounds
+    estimated_temp_c = min(50, max(0, estimated_temp_c))
+    estimated_temp_k = estimated_temp_c + 273.15
     
-    # Calculate box temperatures with bounds
-    box_temperatures = [
-        max(0, min(50, estimated_hive_temp_c - box['cooling_effect']))
-        for box in boxes
-    ]
-    
+    # Calculate final heat transfer
     final_heat_transfer = calculate_heat_transfer(
         estimated_temp_k,
         ambient_temp_k,
@@ -106,10 +98,16 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c):
         total_resistance
     )
 
+    # Calculate box temperatures with bounds
+    box_temperatures = [
+        max(0, min(50, estimated_temp_c - box['cooling_effect']))
+        for box in boxes
+    ]
+
     return {
         'calculated_colony_size': calculated_colony_size,
         'colony_metabolic_heat': colony_metabolic_heat / 1000,  # Convert to kW
-        'base_temperature': estimated_hive_temp_c,
+        'base_temperature': estimated_temp_c,
         'box_temperatures': box_temperatures,
         'total_volume': total_volume,
         'total_surface_area': total_surface_area,
