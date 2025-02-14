@@ -27,85 +27,63 @@ def calculate_oxygen_factor(altitude_m):
     return max(0.5, factor)
 
 def calculate_box_surface_area(width_cm, length_cm, height_cm):
-    """
-    Calculate surface area for a rectangular box
-    Args:
-        width_cm: Width in centimeters
-        length_cm: Length in centimeters
-        height_cm: Height in centimeters
-    Returns:
-        Surface area in square meters
-    """
+    """Calculate surface area for a rectangular box"""
     # Convert dimensions to meters
     width_m = width_cm / 100
     length_m = length_cm / 100
     height_m = height_cm / 100
     
     # Calculate areas (in square meters)
-    top_bottom_area = 2 * (width_m * length_m)  # Two identical faces
-    front_back_area = 2 * (width_m * height_m)  # Two identical faces
-    left_right_area = 2 * (length_m * height_m)  # Two identical faces
+    top_bottom_area = 2 * (width_m * length_m)
+    front_back_area = 2 * (width_m * height_m)
+    left_right_area = 2 * (length_m * height_m)
     
-    total_area = top_bottom_area + front_back_area + left_right_area
-    return total_area
+    return top_bottom_area + front_back_area + left_right_area
+
+def calculate_heat_transfer(temp_hive_k, temp_ambient_k, total_surface_area, total_resistance):
+    """Calculate heat transfer"""
+    temp_difference = abs(temp_hive_k - temp_ambient_k)
+    heat_transfer = (total_surface_area * temp_difference) / total_resistance
+    return heat_transfer
 
 def calculate_hive_temperature(params, boxes, ambient_temp_c):
-    """
-    Calculate hive temperature and related metrics using SI units
-    Args:
-        params: Dictionary of parameters
-        boxes: List of box dimensions
-        ambient_temp_c: Ambient temperature in Celsius
-    """
-    # Convert temperatures to Kelvin for calculations
+    """Calculate hive temperature and related metrics"""
+    # Convert temperatures to Kelvin
     ambient_temp_k = ambient_temp_c + 273.15
     ideal_temp_k = params['ideal_hive_temperature'] + 273.15
     
     # Calculate colony parameters
     calculated_colony_size = 50000 * (params['colony_size'] / 100)
     oxygen_factor = calculate_oxygen_factor(params['altitude'])
+    colony_metabolic_heat = calculated_colony_size * params['bee_metabolic_heat'] * oxygen_factor
     
-    # Calculate metabolic heat (W)
-    # bee_metabolic_heat is in Watts per bee
-    colony_metabolic_heat = (
-        calculated_colony_size 
-        * params['bee_metabolic_heat'] 
-        * oxygen_factor
-    )
-    
-    # Calculate thermal resistance (K⋅m²/W)
-    # Convert thickness from cm to m and ensure thermal conductivity is in W/(m⋅K)
-    middle_layer_resistance = (
-        (params['middle_layer_thickness'] / 100) 
-        / params['middle_layer_thermal_conductivity']
-    )
-    total_thermal_resistance = middle_layer_resistance
-    
-    # Calculate volumes and surface areas
+    # Calculate total surface area and volume
     total_volume = sum(
         (box['width'] / 100) * (box['length'] / 100) * (box['height'] / 100) 
         for box in boxes
-    )  # in cubic meters
-    
+    )
     total_surface_area = sum(
         calculate_box_surface_area(box['width'], box['length'], box['height']) 
         for box in boxes
-    )  # in square meters
+    )
     
-    def calculate_heat_transfer(temp_difference_k):
-        """Calculate heat transfer in Watts"""
-        return total_surface_area * temp_difference_k / total_thermal_resistance
+    # Calculate thermal resistance
+    wood_resistance = (params['wood_thickness'] / 100) / params['wood_thermal_conductivity']
+    total_resistance = wood_resistance + params['air_film_resistance_outside']
     
-    # Temperature calculation with improved convergence
-    # Work in Kelvin for calculations
+    # Temperature calculation with convergence
     lower_bound = ambient_temp_k
     upper_bound = ideal_temp_k
     tolerance = 0.01
     
     while (upper_bound - lower_bound) > tolerance:
         estimated_temp_k = (lower_bound + upper_bound) / 2
-        temp_difference = abs(estimated_temp_k - ambient_temp_k)
-        heat_transfer = calculate_heat_transfer(temp_difference)
+        heat_transfer = calculate_heat_transfer(
+            estimated_temp_k, 
+            ambient_temp_k, 
+            total_surface_area, 
+            total_resistance
+        )
         
         if heat_transfer > colony_metabolic_heat:
             upper_bound = estimated_temp_k
@@ -115,15 +93,18 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c):
     # Convert final temperature back to Celsius
     estimated_hive_temp_c = estimated_temp_k - 273.15
     
-    # Calculate box temperatures (in Celsius)
+    # Calculate box temperatures with bounds
     box_temperatures = [
-        estimated_hive_temp_c - box['cooling_effect'] 
+        max(0, min(50, estimated_hive_temp_c - box['cooling_effect']))
         for box in boxes
     ]
     
-    # Calculate final heat transfer
-    final_temp_difference = abs(estimated_temp_k - ambient_temp_k)
-    final_heat_transfer = calculate_heat_transfer(final_temp_difference)
+    final_heat_transfer = calculate_heat_transfer(
+        estimated_temp_k,
+        ambient_temp_k,
+        total_surface_area,
+        total_resistance
+    )
 
     return {
         'calculated_colony_size': calculated_colony_size,
@@ -132,7 +113,7 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c):
         'box_temperatures': box_temperatures,
         'total_volume': total_volume,
         'total_surface_area': total_surface_area,
-        'thermal_resistance': total_thermal_resistance,
+        'thermal_resistance': total_resistance,
         'ambient_temperature': ambient_temp_c,
         'oxygen_factor': oxygen_factor,
         'heat_transfer': final_heat_transfer / 1000  # Convert to kW
@@ -143,7 +124,7 @@ if 'initialized' not in st.session_state:
     st.session_state.initialized = True
     st.session_state.boxes = [
         {'id': i+1, 'width': 22, 'length': 26, 'height': 9, 'cooling_effect': ce}
-        for i, ce in enumerate([2, 0, 0, 8])  # Default cooling effects
+        for i, ce in enumerate([2, 0, 0, 8])
     ]
 
 # Page header
@@ -159,8 +140,8 @@ with col1:
     # Ambient Temperature Control
     ambient_temperature = st.slider(
         "Ambient Temperature (°C)",
-        min_value=-10.0,
-        max_value=45.0,
+        min_value=0.0,
+        max_value=50.0,
         value=20.0,
         step=0.1,
         help="Set the current ambient temperature"
@@ -206,14 +187,14 @@ with col1:
 params = {
     'colony_size': colony_size,
     'bee_metabolic_heat': 0.0040,  # Watts per bee
-    'middle_layer_material': 'Papier-mâché & Terracotta Composite',
-    'middle_layer_thickness': 1.0,  # cm (will be converted to m in calculations)
-    'middle_layer_thermal_conductivity': 0.2,  # W/(m⋅K)
+    'wood_thickness': 2.0,  # cm
+    'wood_thermal_conductivity': 0.13,  # W/(m⋅K) for pine wood
+    'air_film_resistance_outside': 0.04,  # m²K/W
     'altitude': altitude,  # meters
     'ideal_hive_temperature': 35.0  # °C
 }
 
-# Calculate results with user-defined ambient temperature
+# Calculate results
 results = calculate_hive_temperature(params, st.session_state.boxes, ambient_temperature)
 
 # Display results in second column
@@ -233,7 +214,9 @@ with col2:
     st.subheader("📊 Box Temperatures")
     for i, temp in enumerate(results['box_temperatures']):
         st.markdown(f"**Box {i+1}:** {temp:.1f}°C")
-        st.progress(min(1.0, temp / 40))  # Normalize to 40°C max for progress bar
+        # Ensure progress value is between 0 and 1
+        progress_value = max(0.0, min(1.0, temp / 50))  # Normalize to 50°C max
+        st.progress(progress_value)
     
     # Thermal characteristics in an expander
     with st.expander("🔍 Detailed Thermal Characteristics", expanded=True):
