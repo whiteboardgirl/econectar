@@ -22,23 +22,59 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def calculate_oxygen_factor(altitude_m):
-    """Calculate oxygen factor based on altitude"""
-    factor = 1 - (0.1 * (abs(altitude_m) / 1000))
-    return max(0.5, factor)
+    """
+    Calculate oxygen factor based on altitude using barometric formula approximation
+    Args:
+        altitude_m: Altitude in meters
+    Returns:
+        Oxygen factor (1.0 at sea level, decreasing with altitude)
+    """
+    # Standard atmospheric pressure at sea level (hPa)
+    P0 = 1013.25
+    
+    # Scale height for Earth's atmosphere (m)
+    H = 7400
+    
+    # Calculate pressure ratio using barometric formula
+    pressure_ratio = math.exp(-altitude_m / H)
+    
+    # Convert to oxygen factor (normalized to 1.0 at sea level)
+    oxygen_factor = pressure_ratio
+    
+    # Ensure factor doesn't go below 0.6 (minimum viable for bees)
+    return max(0.6, oxygen_factor)
 
-def calculate_box_surface_area(width_cm, length_cm, height_cm):
-    """Calculate surface area for a rectangular box"""
+def calculate_box_surface_area(width_cm, height_cm):
+    """
+    Calculate surface area for a hexagonal box
+    Args:
+        width_cm: Width (distance between parallel sides) of hexagon in centimeters
+        height_cm: Height of box in centimeters
+    Returns:
+        Total surface area in square meters
+    """
     # Convert dimensions to meters
     width_m = width_cm / 100
-    length_m = length_cm / 100
     height_m = height_cm / 100
     
-    # Calculate areas (in square meters)
-    top_bottom_area = 2 * (width_m * length_m)
-    front_back_area = 2 * (width_m * height_m)
-    left_right_area = 2 * (length_m * height_m)
+    # Calculate hexagon properties
+    # For a regular hexagon:
+    # - Width is distance between parallel sides
+    # - Side length can be calculated from width
+    side_length = width_m / math.sqrt(3)
     
-    return top_bottom_area + front_back_area + left_right_area
+    # Calculate areas
+    # Area of a regular hexagon = (3√3/2) * s², where s is side length
+    hexagon_area = (3 * math.sqrt(3) / 2) * (side_length ** 2)
+    
+    # Area of each rectangular side = side_length * height
+    # Total side area = 6 * (side_length * height)
+    sides_area = 6 * side_length * height_m
+    
+    # Total surface area = 2 hexagonal faces + 6 rectangular sides
+    total_area = (2 * hexagon_area) + sides_area
+    
+    return total_area
 
 def calculate_heat_transfer(temp_hive_k, temp_ambient_k, total_surface_area, total_resistance):
     """Calculate heat transfer"""
@@ -59,11 +95,11 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c):
     
     # Calculate total surface area and volume
     total_volume = sum(
-        (box['width'] / 100) * (box['length'] / 100) * (box['height'] / 100) 
+        (3 * math.sqrt(3) / 2) * ((box['width'] / (100 * math.sqrt(3))) ** 2) * (box['height'] / 100)
         for box in boxes
-    )
+    )  # Volume of hexagonal prism
     total_surface_area = sum(
-        calculate_box_surface_area(box['width'], box['length'], box['height']) 
+        calculate_box_surface_area(box['width'], box['height']) 
         for box in boxes
     )
     
