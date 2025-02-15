@@ -35,19 +35,21 @@ def get_temperature_from_coordinates(lat, lon):
         st.error("Invalid longitude. Must be between -180 and 180.")
         return None
     
-    # Correct the URL parameter separator
-    url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true'
+    url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}¤t_weather=true'
     response = requests.get(url)
     
     if response.status_code == 200:
         data = response.json()
-        # More detailed logging
         st.write(f"Debug Info - Response: {data}")
         if 'current_weather' in data:
-            return data['current_weather']['temperature']
+            current_weather = data['current_weather']
+            if 'temperature' in current_weather:
+                return current_weather['temperature']
+            else:
+                st.error("Temperature data not found in the API response.")
+                return None
         else:
             st.error("The API response did not contain 'current_weather' data.")
-            st.write(f"Debug Info - Full Response: {data}")
             return None
     else:
         error_data = response.json()
@@ -243,17 +245,6 @@ params = {
     'ideal_hive_temperature': 35.0  # °C
 }
 
-# Add a graph for temperature distribution
-fig, ax = plt.subplots()
-ax.bar([f'Box {i+1}' for i in range(len(results['box_temperatures']))], results['box_temperatures'])
-ax.set_ylabel('Temperature (°C)')
-ax.set_title('Temperature Distribution Across Hive Boxes')
-buf = BytesIO()
-plt.savefig(buf, format='png')
-buf.seek(0)
-b64 = base64.b64encode(buf.read()).decode()
-st.markdown(f'<img src="data:image/png;base64,{b64}"/>', unsafe_allow_html=True)
-
 # Convert radio selection to boolean
 is_daytime = is_daytime == 'Day'
 
@@ -262,15 +253,7 @@ results = calculate_hive_temperature(params, st.session_state.boxes, ambient_tem
 
 # Display results
 with col2:
-    st.subheader("📈 Analysis Results")
-    
-    col2a, col2b = st.columns(2)
-    with col2a:
-        st.metric("Base Hive Temperature", f"{results['base_temperature']:.1f}°C")
-        st.metric("Ambient Temperature", f"{results['ambient_temperature']:.1f}°C")
-    with col2b:
-        st.metric("Colony Size", f"{int(results['calculated_colony_size']):,} bees")
-        st.metric("Metabolic Heat", f"{results['colony_metabolic_heat']:.3f} kW")
+    # ... (previous result display code)
 
     st.subheader("📊 Box Temperatures")
     for i, temp in enumerate(results['box_temperatures']):
@@ -285,5 +268,8 @@ with col2:
     ax.set_title('Temperature Distribution Across Hive Boxes')
     buf = BytesIO()
     plt.savefig(buf, format='png')
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode()
+    st.markdown(f'<img src="data:image/png;base64,{b64}"/>', unsafe_allow_html=True)
 
 
