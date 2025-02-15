@@ -8,7 +8,7 @@ import requests
 
 # Set page config
 st.set_page_config(
-    page_title="ECONECTAR Hive Thermal Dashboard",
+    page_title="Hive Thermal Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -35,8 +35,7 @@ def get_temperature_from_coordinates(lat, lon):
         st.error("Invalid longitude. Must be between -180 and 180.")
         return None
     
-    # Correct the URL parameter separator
-    url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true'
+    url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}¤t_weather=true'
     response = requests.get(url)
     
     if response.status_code == 200:
@@ -67,8 +66,8 @@ def calculate_heat_transfer(temp_hive_k, temp_ambient_k, total_surface_area, tot
     """Calculate heat transfer in Watts."""
     return (total_surface_area * abs(temp_hive_k - temp_ambient_k)) / total_resistance
 
-def adjust_for_time_of_day(is_daytime, params):
-    """Adjust parameters based on time of day in tropical conditions."""
+def adjust_for_time_of_day(is_daytime, params, altitude):
+    """Adjust parameters based on time of day and altitude in tropical conditions."""
     if is_daytime:
         # During the day, increase cooling effort due to higher activity and solar radiation
         params['ideal_hive_temperature'] += 1.0  # Slight increase in ideal temperature due to activity
@@ -77,15 +76,24 @@ def adjust_for_time_of_day(is_daytime, params):
         # At night, decrease ideal temp slightly due to less activity and clustering behavior
         params['ideal_hive_temperature'] -= 0.5  # Slight decrease due to less activity
         params['air_film_resistance_outside'] *= 1.1  # Slight increase in resistance due to less wind at night
+    
+    # Adjust for altitude
+    oxygen_factor = calculate_oxygen_factor(altitude)
+    params['bee_metabolic_heat'] *= oxygen_factor  # Adjust metabolic heat based on oxygen availability
+    params['air_film_resistance_outside'] *= (1 + (altitude / 1000) * 0.05)  # Increase resistance slightly with altitude due to potential wind increase
+
+    # Temperature decrease with altitude
+    params['ideal_hive_temperature'] -= (altitude / 1000) * 0.5  # Decrease ideal temp by 0.5°C per 1000m
+    
     return params
 
-def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
-    """Calculate hive temperature with adjustments for tropical conditions in Colombia."""
-    params = adjust_for_time_of_day(is_daytime, params)
+def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime, altitude):
+    """Calculate hive temperature with adjustments for tropical conditions in Colombia including altitude."""
+    params = adjust_for_time_of_day(is_daytime, params, altitude)
     
     ambient_temp_k, ideal_temp_k = ambient_temp_c + 273.15, params['ideal_hive_temperature'] + 273.15
     calculated_colony_size = 50000 * (params['colony_size'] / 100)
-    oxygen_factor = calculate_oxygen_factor(params['altitude'])
+    oxygen_factor = calculate_oxygen_factor(altitude)
     colony_metabolic_heat = calculated_colony_size * params['bee_metabolic_heat'] * oxygen_factor
 
     total_volume = sum(
@@ -111,6 +119,9 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
         # Since nights are warm, less heat is needed, but still some clustering effect
         heat_contribution = heat_contribution * 0.9 if not is_daytime else heat_contribution  # Slight increase for night clustering
         estimated_temp_c = ambient_temp_c + heat_contribution
+    
+    # Adjust for altitude's effect on temperature
+    estimated_temp_c -= (altitude / 1000) * 0.5  # Decrease estimated temp by 0.5°C per 1000m
     
     estimated_temp_c = min(50, max(0, estimated_temp_c))
     estimated_temp_k = estimated_temp_c + 273.15
@@ -139,6 +150,7 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
         'oxygen_factor': oxygen_factor,
         'heat_transfer': final_heat_transfer / 1000
     }
+
 # Initialize session state
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
@@ -181,69 +193,4 @@ with col1:
     progress_value = (oxygen_factor - 0.6) / (1.0 - 0.6)  # Normalize to 0-1 range if oxygen_factor is between 0.6 and 1.0
     
     st.progress(progress_value)
-    st.caption(f"Oxygen Factor: {oxygen_factor:.2f}")
-
-    st.subheader("📦 Box Configuration")
-    for i, box in enumerate(st.session_state.boxes):
-        with st.expander(f"Box {box['id']}", expanded=True):
-            st.session_state.boxes[i]['cooling_effect'] = st.number_input(
-                "Cooling Effect (°C)", 0.0, 20.0, float(box['cooling_effect']), 0.5, key=f"cooling_effect_{i}"
-            )
-
-# Parameters dictionary
-params = {
-    'colony_size': colony_size,
-    'bee_metabolic_heat': 0.0040,  # Watts per bee
-    'wood_thickness': 2.0,  # cm
-    'wood_thermal_conductivity': 0.13,  # W/(m⋅K) for pine wood
-    'air_film_resistance_outside': 0.04,  # m²K/W
-    'altitude': altitude,  # meters
-    'ideal_hive_temperature': 35.0  # °C
-}
-
-# Convert radio selection to boolean
-is_daytime = is_daytime == 'Day'
-
-# Calculate results
-results = calculate_hive_temperature(params, st.session_state.boxes, ambient_temperature, is_daytime)
-
-# Display results
-with col2:
-    st.subheader("📈 Analysis Results")
-    
-    col2a, col2b = st.columns(2)
-    with col2a:
-        st.metric("Base Hive Temperature", f"{results['base_temperature']:.1f}°C")
-        st.metric("Ambient Temperature", f"{results['ambient_temperature']:.1f}°C")
-    with col2b:
-        st.metric("Colony Size", f"{int(results['calculated_colony_size']):,} bees")
-        st.metric("Metabolic Heat", f"{results['colony_metabolic_heat']:.3f} kW")
-
-    st.subheader("📊 Box Temperatures")
-    for i, temp in enumerate(results['box_temperatures']):
-        st.markdown(f"**Box {i+1}:** {temp:.1f}°C")
-        progress_value = max(0.0, min(1.0, temp / 50))
-        st.progress(progress_value)
-
-    # Add a graph for temperature distribution
-    fig, ax = plt.subplots()
-    ax.bar([f'Box {i+1}' for i in range(len(results['box_temperatures']))], results['box_temperatures'])
-    ax.set_ylabel('Temperature (°C)')
-    ax.set_title('Temperature Distribution Across Hive Boxes')
-    buf = BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    b64 = base64.b64encode(buf.read()).decode()
-    st.markdown(f'<img src="data:image/png;base64,{b64}"/>', unsafe_allow_html=True)
-    
-    with st.expander("🔍 Detailed Thermal Characteristics", expanded=True):
-        st.markdown(f"""
-        - **Total Volume:** {results['total_volume']:.4f} m³
-        - **Total Surface Area:** {results['total_surface_area']:.4f} m²
-        - **Thermal Resistance:** {results['thermal_resistance']:.4f} m²K/W
-        - **Heat Transfer:** {results['heat_transfer']:.3f} kW
-        """)
-
-# Footer
-st.markdown("---")
-st.markdown("*Built with Streamlit • Thermal analysis for beekeeping with GPS-based temperature using Open-Meteo API*")
+    st.caption(f"Oxygen Factor: {oxygen_factor:.2
