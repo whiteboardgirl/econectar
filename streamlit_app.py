@@ -26,15 +26,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def get_temperature_from_coordinates(lat, lon):
-    """Fetch current temperature from Open-Meteo API."""
+    """Fetch current temperature from Open-Meteo API with enhanced error handling."""
+    # Validate coordinates
+    if not (-90 <= lat <= 90):
+        st.error("Invalid latitude. Must be between -90 and 90.")
+        return None
+    if not (-180 <= lon <= 180):
+        st.error("Invalid longitude. Must be between -180 and 180.")
+        return None
+    
     url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}¤t_weather=true'
     response = requests.get(url)
+    
     if response.status_code == 200:
         data = response.json()
         return data['current_weather']['temperature']
     else:
-        st.error(f"Failed to fetch weather data. Status code: {response.status_code}")
-        return None
+        error_data = response.json()
+        st.error(f"Failed to fetch weather data. Status code: {response.status_code}. Error: {error_data.get('error', 'Unknown error')}")
+        st.write(f"Debug Info - URL: {url}")  # This will show the exact URL used in the request
+    return None
 
 def calculate_oxygen_factor(altitude_m):
     """Calculate oxygen factor based on altitude."""
