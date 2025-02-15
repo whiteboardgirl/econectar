@@ -143,8 +143,8 @@ col1, col2 = st.columns([1, 1])
 with col1:
     st.subheader("📊 Input Parameters")
     
-    # User input for GPS coordinates
-    gps_coordinates = st.text_input("Enter GPS Coordinates (lat, lon)", "4.6097, -74.0817")  # Default is Bogotá, Colombia
+    # User input for GPS coordinates with enhanced guidance
+    gps_coordinates = st.text_input("Enter GPS Coordinates (lat, lon)", "4.6097, -74.0817", help="Enter in decimal degrees format, e.g., '4.6097, -74.0817' for Bogotá, Colombia")
     try:
         lat, lon = map(float, gps_coordinates.split(','))
         ambient_temperature = get_temperature_from_coordinates(lat, lon)
@@ -153,7 +153,7 @@ with col1:
     except ValueError:
         st.error("Please enter valid coordinates in the format 'lat, lon'")
         ambient_temperature = 25.0  # Default temp if input is invalid
-    
+
     # User selects whether it's day or night
     is_daytime = st.radio("Time of Day", ['Day', 'Night'], index=0, help="Select whether it's day or night")
     
