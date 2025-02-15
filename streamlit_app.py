@@ -74,12 +74,18 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
     total_resistance = wood_resistance + params['air_film_resistance_outside']
 
     if ambient_temp_c >= params['ideal_hive_temperature']:
+        # If ambient is above or equal to ideal, bees will cool the hive
         cooling_effort = 1.0 - min(1.0, (ambient_temp_c - params['ideal_hive_temperature']) / 15)
-        temp_increase = 3.0 * cooling_effort
-        estimated_temp_c = ambient_temp_c + temp_increase
+        temp_decrease = 2.0 * cooling_effort if is_daytime else 1.0 * cooling_effort  # More cooling effort during the day
+        estimated_temp_c = max(params['ideal_hive_temperature'], ambient_temp_c - temp_decrease)
     else:
-        heat_contribution = min(params['ideal_hive_temperature'] - ambient_temp_c, 
-                                (colony_metabolic_heat * total_resistance) / total_surface_area)
+        # If ambient is below ideal, bees will warm the hive
+        heat_contribution = min(
+            params['ideal_hive_temperature'] - ambient_temp_c,
+            (colony_metabolic_heat * total_resistance) / total_surface_area
+        )
+        # At night, bees might cluster more effectively, so we slightly increase the heat contribution
+        heat_contribution = heat_contribution * (1.1 if not is_daytime else 1.0)
         estimated_temp_c = ambient_temp_c + heat_contribution
     
     estimated_temp_c = min(50, max(0, estimated_temp_c))
