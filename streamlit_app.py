@@ -254,7 +254,15 @@ results = calculate_hive_temperature(params, st.session_state.boxes, ambient_tem
 
 # Display results
 with col2:
-    # ... (previous result display code)
+    st.subheader("📈 Analysis Results")
+    
+    col2a, col2b = st.columns(2)
+    with col2a:
+        st.metric("Base Hive Temperature", f"{results['base_temperature']:.1f}°C")
+        st.metric("Ambient Temperature", f"{results['ambient_temperature']:.1f}°C")
+    with col2b:
+        st.metric("Colony Size", f"{int(results['calculated_colony_size']):,} bees")
+        st.metric("Metabolic Heat", f"{results['colony_metabolic_heat']:.3f} kW")
 
     st.subheader("📊 Box Temperatures")
     for i, temp in enumerate(results['box_temperatures']):
@@ -263,14 +271,16 @@ with col2:
         st.progress(progress_value)
 
     # Add a graph for temperature distribution
-    fig, ax = plt.subplots()
-    ax.bar([f'Box {i+1}' for i in range(len(results['box_temperatures']))], results['box_temperatures'])
-    ax.set_ylabel('Temperature (°C)')
-    ax.set_title('Temperature Distribution Across Hive Boxes')
-    buf = BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    b64 = base64.b64encode(buf.read()).decode()
-    st.markdown(f'<img src="data:image/png;base64,{b64}"/>', unsafe_allow_html=True)
-
+    try:
+        fig, ax = plt.subplots()
+        ax.bar([f'Box {i+1}' for i in range(len(results['box_temperatures']))], results['box_temperatures'])
+        ax.set_ylabel('Temperature (°C)')
+        ax.set_title('Temperature Distribution Across Hive Boxes')
+        buf = BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        b64 = base64.b64encode(buf.read()).decode()
+        st.markdown(f'<img src="data:image/png;base64,{b64}"/>', unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"An error occurred while generating the graph: {e}")
 
