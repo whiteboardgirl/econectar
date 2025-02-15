@@ -87,6 +87,27 @@ def adjust_for_time_of_day(is_daytime, params, altitude):
     
     return params
 
+def adjust_for_time_of_day(is_daytime, params, altitude):
+    """Adjust parameters based on time of day and altitude in tropical conditions."""
+    if is_daytime:
+        # During the day, increase cooling effort due to higher activity and solar radiation
+        params['ideal_hive_temperature'] += 1.0  # Slight increase in ideal temperature due to activity
+        params['bee_metabolic_heat'] *= 1.1  # Increase metabolic heat slightly
+    else:
+        # At night, decrease ideal temp slightly due to less activity and clustering behavior
+        params['ideal_hive_temperature'] -= 0.5  # Slight decrease due to less activity
+        params['air_film_resistance_outside'] *= 1.1  # Slight increase in resistance due to less wind at night
+    
+    # Adjust for altitude
+    oxygen_factor = calculate_oxygen_factor(altitude)
+    params['bee_metabolic_heat'] *= oxygen_factor  # Adjust metabolic heat based on oxygen availability
+    params['air_film_resistance_outside'] *= (1 + (altitude / 1000) * 0.05)  # Increase resistance slightly with altitude due to potential wind increase
+
+    # Temperature decrease with altitude
+    params['ideal_hive_temperature'] -= (altitude / 1000) * 0.5  # Decrease ideal temp by 0.5°C per 1000m
+    
+    return params
+
 def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime, altitude):
     """Calculate hive temperature with adjustments for tropical conditions in Colombia including altitude."""
     params = adjust_for_time_of_day(is_daytime, params, altitude)
@@ -164,33 +185,3 @@ st.title("🐝 Hive Thermal Dashboard")
 st.markdown("---")
 
 # Main layout
-col1, col2 = st.columns([1, 1])
-
-with col1:
-    st.subheader("📊 Input Parameters")
-    
-    # User input for GPS coordinates with enhanced guidance
-    gps_coordinates = st.text_input("Enter GPS Coordinates (lat, lon)", "4.6097, -74.0817", help="Enter in decimal degrees format, e.g., '4.6097, -74.0817' for Bogotá, Colombia")
-    try:
-        lat, lon = map(float, gps_coordinates.split(','))
-        ambient_temperature = get_temperature_from_coordinates(lat, lon)
-        if ambient_temperature is None:
-            ambient_temperature = 25.0  # Default temp if API fails
-    except ValueError:
-        st.error("Please enter valid coordinates in the format 'lat, lon'")
-        ambient_temperature = 25.0  # Default temp if input is invalid
-
-    # User selects whether it's day or night
-    is_daytime = st.radio("Time of Day", ['Day', 'Night'], index=0, help="Select whether it's day or night")
-    
-    st.write(f"Current Ambient Temperature: {ambient_temperature}°C")
-    
-    colony_size = st.slider("Colony Size (%)", 0, 100, 50)
-    altitude = st.slider("Altitude (meters)", 0, 3800, 0, 100)
-    oxygen_factor = calculate_oxygen_factor(altitude)
-    
-    # Ensure oxygen_factor is between 0 and 1 for st.progress()
-    progress_value = (oxygen_factor - 0.6) / (1.0 - 0.6)  # Normalize to 0-1 range if oxygen_factor is between 0.6 and 1.0
-    
-    st.progress(progress_value)
-    st.caption(f"Oxygen Factor: {oxygen_factor:.2
