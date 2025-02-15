@@ -56,7 +56,7 @@ def adjust_for_time_of_day(is_daytime, params):
     return params
 
 def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
-    """Calculate hive temperature with day/night adjustments."""
+    """Calculate hive temperature with adjustments for tropical conditions in Colombia."""
     params = adjust_for_time_of_day(is_daytime, params)
     
     ambient_temp_k, ideal_temp_k = ambient_temp_c + 273.15, params['ideal_hive_temperature'] + 273.15
@@ -73,19 +73,20 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
     wood_resistance = (params['wood_thickness'] / 100) / params['wood_thermal_conductivity']
     total_resistance = wood_resistance + params['air_film_resistance_outside']
 
+    # Adjustments for tropical conditions
     if ambient_temp_c >= params['ideal_hive_temperature']:
-        # If ambient is above or equal to ideal, bees will cool the hive
-        cooling_effort = 1.0 - min(1.0, (ambient_temp_c - params['ideal_hive_temperature']) / 15)
-        temp_decrease = 2.0 * cooling_effort if is_daytime else 1.0 * cooling_effort  # More cooling effort during the day
+        # In tropical conditions, cooling is more critical during the day
+        cooling_effort = min(1.0, (ambient_temp_c - params['ideal_hive_temperature']) / 10)  # Less aggressive cooling due to high humidity
+        temp_decrease = 1.5 * cooling_effort if is_daytime else 0.5 * cooling_effort  # More cooling during the day
         estimated_temp_c = max(params['ideal_hive_temperature'], ambient_temp_c - temp_decrease)
     else:
-        # If ambient is below ideal, bees will warm the hive
+        # Minimal heating needed at night due to warm ambient conditions
         heat_contribution = min(
             params['ideal_hive_temperature'] - ambient_temp_c,
             (colony_metabolic_heat * total_resistance) / total_surface_area
         )
-        # At night, bees might cluster more effectively, so we slightly increase the heat contribution
-        heat_contribution = heat_contribution * (1.1 if not is_daytime else 1.0)
+        # Since nights are warm, less heat is needed
+        heat_contribution = heat_contribution * 0.8  # reducing heat contribution
         estimated_temp_c = ambient_temp_c + heat_contribution
     
     estimated_temp_c = min(50, max(0, estimated_temp_c))
@@ -116,6 +117,16 @@ def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
         'heat_transfer': final_heat_transfer / 1000
     }
 
+# Adjust the function to reflect minimal changes between day and night in tropical climates
+def adjust_for_time_of_day(is_daytime, params):
+    """Adjust parameters based on time of day in tropical conditions."""
+    if is_daytime:
+        # During the day, cooling efforts are more pronounced due to higher solar radiation
+        params['ideal_hive_temperature'] += 0.5  # Slight increase in ideal temperature due to activity
+    else:
+        # At night, the decrease might be minimal due to warm ambient conditions
+        params['ideal_hive_temperature'] -= 0.5  # Slight decrease due to less activity
+    return params
 # Initialize session state
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
