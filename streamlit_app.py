@@ -35,29 +35,32 @@ def get_temperature_from_coordinates(lat, lon):
         st.error("Invalid longitude. Must be between -180 and 180.")
         return None
     
-    # Correct the URL parameter separator
     url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true'
     response = requests.get(url)
     
     if response.status_code == 200:
         data = response.json()
-        st.write(f"Debug Info - Response: {data}")
-        if 'current_weather' in data:
-            current_weather = data['current_weather']
-            if 'temperature' in current_weather:
-                return current_weather['temperature']
-            else:
-                st.error("Temperature data not found in the API response.")
-                return None
-        else:
-            st.error("The API response did not contain 'current_weather' data.")
-            return None
+        return data['current_weather']['temperature']
     else:
         error_data = response.json()
-        st.error(f"Failed to fetch weather data. Status code: {response.status_code}. Error: {error_data.get('reason', 'Unknown error')}")
-        st.write(f"Debug Info - URL: {url}")
-        st.write(f"Debug Info - Error Response: {error_data}")
+        st.error(f"Failed to fetch weather data. Status code: {response.status_code}. Error: {error_data.get('error', 'Unknown error')}")
+        st.write(f"Debug Info - URL: {url}")  # This will show the exact URL used in the request
     return None
+
+def calculate_oxygen_factor(altitude_m):
+    """Calculate oxygen factor based on altitude."""
+    P0 = 1013.25  # Standard atmospheric pressure at sea level (hPa)
+    H = 7400  # Scale height for Earth's atmosphere (m)
+    pressure_ratio = math.exp(-altitude_m / H)
+    return max(0.6, pressure_ratio)
+
+def calculate_box_surface_area(width_cm, height_cm):
+    """Calculate surface area for a hexagonal box in square meters."""
+    width_m, height_m = width_cm / 100, height_cm / 100
+    side_length = width_m / math.sqrt(3)
+    hexagon_area = (3 * math.sqrt(3) / 2) * (side_length ** 2)
+    sides_area = 6 * side_length * height_m
+    return (2 * hexagon_area) + sides_area
 
 def calculate_oxygen_factor(altitude_m):
     """Calculate oxygen factor based on altitude."""
