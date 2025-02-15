@@ -43,8 +43,22 @@ def calculate_heat_transfer(temp_hive_k, temp_ambient_k, total_surface_area, tot
     """Calculate heat transfer in Watts."""
     return (total_surface_area * abs(temp_hive_k - temp_ambient_k)) / total_resistance
 
-def calculate_hive_temperature(params, boxes, ambient_temp_c):
-    """Calculate hive temperature and related metrics."""
+def adjust_for_time_of_day(is_daytime, params):
+    """Adjust parameters based on time of day."""
+    if is_daytime:
+        # During the day, bees might be more active
+        params['bee_metabolic_heat'] *= 1.1  # Increase metabolic heat slightly
+        params['ideal_hive_temperature'] += 1  # Bees might prefer a slightly warmer hive
+    else:
+        # At night, ambient might be cooler, and bees cluster
+        params['air_film_resistance_outside'] *= 1.2  # Increase resistance due to less wind at night
+        params['ideal_hive_temperature'] -= 1  # Bees might prefer a slightly cooler hive when clustering
+    return params
+
+def calculate_hive_temperature(params, boxes, ambient_temp_c, is_daytime):
+    """Calculate hive temperature with day/night adjustments."""
+    params = adjust_for_time_of_day(is_daytime, params)
+    
     ambient_temp_k, ideal_temp_k = ambient_temp_c + 273.15, params['ideal_hive_temperature'] + 273.15
     calculated_colony_size = 50000 * (params['colony_size'] / 100)
     oxygen_factor = calculate_oxygen_factor(params['altitude'])
@@ -114,6 +128,9 @@ col1, col2 = st.columns([1, 1])
 with col1:
     st.subheader("📊 Input Parameters")
     
+    # User selects whether it's day or night
+    is_daytime = st.radio("Time of Day", ['Day', 'Night'], index=0, help="Select whether it's day or night")
+    
     ambient_temperature = st.slider("Ambient Temperature (°C)", 0.0, 50.0, 20.0, 0.1)
     colony_size = st.slider("Colony Size (%)", 0, 100, 50)
     altitude = st.slider("Altitude (meters)", 0, 3800, 0, 100)
@@ -139,8 +156,11 @@ params = {
     'ideal_hive_temperature': 35.0  # °C
 }
 
+# Convert radio selection to boolean
+is_daytime = is_daytime == 'Day'
+
 # Calculate results
-results = calculate_hive_temperature(params, st.session_state.boxes, ambient_temperature)
+results = calculate_hive_temperature(params, st.session_state.boxes, ambient_temperature, is_daytime)
 
 # Display results
 with col2:
@@ -181,4 +201,4 @@ with col2:
 
 # Footer
 st.markdown("---")
-st.markdown("*Built with Streamlit • Thermal analysis for beekeeping*")
+st.markdown("*Built with Streamlit • Thermal analysis for beekeeping with day/night considerations*")
