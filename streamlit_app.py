@@ -185,3 +185,85 @@ st.title("🐝 Hive Thermal Dashboard")
 st.markdown("---")
 
 # Main layout
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    st.subheader("📊 Input Parameters")
+    
+    # User input for GPS coordinates with enhanced guidance
+    gps_coordinates = st.text_input("Enter GPS Coordinates (lat, lon)", "4.6097, -74.0817", help="Enter in decimal degrees format, e.g., '4.6097, -74.0817' for Bogotá, Colombia")
+    try:
+        lat, lon = map(float, gps_coordinates.split(','))
+        ambient_temperature = get_temperature_from_coordinates(lat, lon)
+        if ambient_temperature is None:
+            ambient_temperature = 25.0  # Default temp if API fails
+    except ValueError:
+        st.error("Please enter valid coordinates in the format 'lat, lon'")
+        ambient_temperature = 25.0  # Default temp if input is invalid
+
+    # User selects whether it's day or night
+    is_daytime = st.radio("Time of Day", ['Day', 'Night'], index=0, help="Select whether it's day or night")
+    
+    st.write(f"Current Ambient Temperature: {ambient_temperature}°C")
+    
+    colony_size = st.slider("Colony Size (%)", 0, 100, 50)
+    altitude = st.slider("Altitude (meters)", 0, 3800, 0, 100)
+    oxygen_factor = calculate_oxygen_factor(altitude)
+    
+    # Ensure oxygen_factor is between 0 and 1 for st.progress()
+    progress_value = (oxygen_factor - 0.6) / (1.0 - 0.6)  # Normalize to 0-1 range if oxygen_factor is between 0.6 and 1.0
+    
+    st.progress(progress_value)
+    st.caption(f"Oxygen Factor: {oxygen_factor:.2f}")
+
+    st.subheader("📦 Box Configuration")
+    for i, box in enumerate(st.session_state.boxes):
+        with st.expander(f"Box {box['id']}", expanded=True):
+            st.session_state.boxes[i]['cooling_effect'] = st.number_input(
+                "Cooling Effect (°C)", 0.0, 20.0, float(box['cooling_effect']), 0.5, key=f"cooling_effect_{i}"
+            )
+
+# Parameters dictionary
+params = {
+    'colony_size': colony_size,
+    'bee_metabolic_heat': 0.0040,  # Watts per bee
+    'wood_thickness': 2.0,  # cm
+    'wood_thermal_conductivity': 0.13,  # W/(m⋅K) for pine wood
+    'air_film_resistance_outside': 0.04,  # m²K/W
+    'altitude': altitude,  # meters
+    'ideal_hive_temperature': 35.0  # °C
+}
+
+# Convert radio selection to boolean
+is_daytime = is_daytime == 'Day'
+
+# Calculate results
+results = calculate_hive_temperature(params, st.session_state.boxes, ambient_temperature, is_daytime, altitude)
+
+# Display results
+with col2:
+    st.subheader("📈 Analysis Results")
+    
+    col2a, col2b = st.columns(2)
+    with col2a:
+        st.metric("Base Hive Temperature", f"{results['base_temperature']:.1f}°C")
+        st.metric("Ambient Temperature", f"{results['ambient_temperature']:.1f}°C")
+    with col2b:
+        st.metric("Colony Size", f"{int(results['calculated_colony_size']):,} bees")
+        st.metric("Metabolic Heat", f"{results['colony_metabolic_heat']:.3f} kW")
+
+    st.subheader("📊 Box Temperatures")
+    for i, temp in enumerate(results['box_temperatures']):
+        st.markdown(f"**Box {i+1}:** {temp:.1f}°C")
+        progress_value = max(0.0, min(1.0, temp / 50))
+        st.progress(progress_value)
+
+    # Add a graph for temperature distribution
+    fig, ax = plt.subplots()
+    ax.bar([f'Box {i+1}' for i in range(len(results['box_temperatures']))], results['box_temperatures'])
+    ax.set_ylabel('Temperature (°C)')
+    ax.set_title('Temperature Distribution Across Hive Boxes')
+    buf = BytesIO()
+    plt.savefig(buf, format='png')
+
+
