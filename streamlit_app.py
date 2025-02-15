@@ -35,7 +35,8 @@ def get_temperature_from_coordinates(lat, lon):
         st.error("Invalid longitude. Must be between -180 and 180.")
         return None
     
-    url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}¤t_weather=true'
+    # Correct the URL parameter separator
+    url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true'
     response = requests.get(url)
     
     if response.status_code == 200:
@@ -53,7 +54,7 @@ def get_temperature_from_coordinates(lat, lon):
             return None
     else:
         error_data = response.json()
-        st.error(f"Failed to fetch weather data. Status code: {response.status_code}. Error: {error_data.get('error', 'Unknown error')}")
+        st.error(f"Failed to fetch weather data. Status code: {response.status_code}. Error: {error_data.get('reason', 'Unknown error')}")
         st.write(f"Debug Info - URL: {url}")
         st.write(f"Debug Info - Error Response: {error_data}")
     return None
