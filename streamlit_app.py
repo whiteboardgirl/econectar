@@ -8,7 +8,7 @@ import requests
 
 # Set page config
 st.set_page_config(
-    page_title="Hive Thermal Dashboard",
+    page_title="ECONECTAR Hive Thermal Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -66,14 +66,6 @@ def calculate_box_surface_area(width_cm, height_cm):
 def calculate_heat_transfer(temp_hive_k, temp_ambient_k, total_surface_area, total_resistance):
     """Calculate heat transfer in Watts."""
     return (total_surface_area * abs(temp_hive_k - temp_ambient_k)) / total_resistance
-
-def adjust_for_time_of_day(is_daytime, params):
-    """Adjust parameters based on time of day in tropical conditions."""
-    if is_daytime:
-        params['ideal_hive_temperature'] += 0.5  # Slight increase in ideal temperature due to activity
-    else:
-        params['ideal_hive_temperature'] -= 0.5  # Slight decrease due to less activity
-    return params
 
 def adjust_for_time_of_day(is_daytime, params):
     """Adjust parameters based on time of day in tropical conditions."""
