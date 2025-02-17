@@ -313,22 +313,98 @@ def calculate_solar_heat_gain(lat: float, lon: float, is_daytime: bool, day_of_y
     # Sidebar: Bee species and parameters
 
 def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
+    """
+    Creates a bar chart of box temperatures with clear visual indicators for ideal range
+    and temperature status.
+    """
     labels = [f"Box {box.id}" for box in boxes]
-    fig = go.Figure(data=[go.Bar(
+    
+    # Create color scale based on temperature ranges
+    colors = []
+    for temp in box_temps:
+        if temp < species.ideal_temp[0]:
+            colors.append('blue')  # Too cold
+        elif temp > species.ideal_temp[1]:
+            colors.append('red')   # Too hot
+        else:
+            colors.append('green') # Just right
+
+    # Create the bar chart
+    fig = go.Figure()
+    
+    # Add ideal temperature range as a rectangular shape
+    fig.add_shape(
+        type="rect",
+        x0=-0.5,
+        x1=len(boxes) - 0.5,
+        y0=species.ideal_temp[0],
+        y1=species.ideal_temp[1],
+        fillcolor="lightgreen",
+        opacity=0.2,
+        line=dict(width=0),
+        layer="below"
+    )
+
+    # Add temperature bars
+    fig.add_trace(go.Bar(
         x=labels,
         y=box_temps,
-        marker_color='indianred',
+        marker_color=colors,
         text=[f"{temp:.1f}°C" for temp in box_temps],
         textposition='auto',
-    )])
-    fig.update_layout(
-        title="Temperature in Hive Boxes",
-        xaxis_title="Box ID",
-        yaxis_title="Temperature (°C)",
-        yaxis=dict(range=[species.ideal_temp[0] - 2, species.ideal_temp[1] + 2])
-    )
-    return fig
+    ))
 
+    # Add horizontal lines for ideal temperature range
+    fig.add_shape(
+        type="line",
+        x0=-0.5,
+        x1=len(boxes) - 0.5,
+        y0=species.ideal_temp[0],
+        y1=species.ideal_temp[0],
+        line=dict(color="green", width=2, dash="dash"),
+    )
+    fig.add_shape(
+        type="line",
+        x0=-0.5,
+        x1=len(boxes) - 0.5,
+        y0=species.ideal_temp[1],
+        y1=species.ideal_temp[1],
+        line=dict(color="green", width=2, dash="dash"),
+    )
+
+    # Update layout with more detailed information
+    fig.update_layout(
+        title=dict(
+            text=f"Temperature Distribution in Hive Boxes<br>"
+                 f"<sup>Ideal range: {species.ideal_temp[0]}°C - {species.ideal_temp[1]}°C</sup>",
+            x=0.5
+        ),
+        xaxis_title="Box Position",
+        yaxis_title="Temperature (°C)",
+        yaxis=dict(
+            range=[
+                min(min(box_temps), species.ideal_temp[0]) - 1,
+                max(max(box_temps), species.ideal_temp[1]) + 1
+            ]
+        ),
+        showlegend=False
+    )
+
+    # Add annotations for temperature status
+    for i, temp in enumerate(box_temps):
+        status = "Too Cold" if temp < species.ideal_temp[0] else \
+                "Too Hot" if temp > species.ideal_temp[1] else \
+                "Ideal"
+        fig.add_annotation(
+            x=labels[i],
+            y=temp,
+            text=status,
+            yshift=20,
+            showarrow=False,
+            font=dict(size=10)
+        )
+
+    return fig
 def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
     """
     Creates a 3D visualization of the hive boxes with temperature mapping.
