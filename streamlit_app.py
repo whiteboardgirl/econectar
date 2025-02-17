@@ -190,7 +190,12 @@ def main():
         lat, lon = map(float, st.text_input("GPS Coordinates", "-3.4653,-62.2159").split(','))
         altitude = get_altitude(lat, lon) or st.slider("Altitude (m)", 0, 1000, 100)
     with col2:
-        ambient_temp = get_temperature(lat, lon) or st.slider("Temperature (°C)", 15.0, 40.0, 28.0)
+        weather_data = get_weather_data(lat, lon)
+        if weather_data:
+            ambient_temp = weather_data['temperature']
+            st.write(f"Current Weather: {ambient_temp}°C, Humidity: {weather_data['humidity']}%")
+        else:
+            ambient_temp = st.slider("Temperature (°C)", 15.0, 40.0, 28.0)
         is_daytime = st.toggle("Daytime", True)
 
     results = calculate_hive_temperature(species, params, st.session_state.boxes, ambient_temp, is_daytime, altitude)
@@ -223,38 +228,31 @@ def main():
         st.pyplot(plot_curved_hive_surface(st.session_state.boxes))
 
 @st.cache_data
-def get_temperature(lat: float, lon: float) -> float:
-    try:
-        response = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true")
-        return response.json()['current_weather']['temperature']
-    except:
-        return None
-
-@st.cache_data
 def get_weather_data(lat: float, lon: float) -> Dict[str, Any]:
     try:
-        api_key = "YOUR_API_KEY_HERE"  # Replace with your actual API key
-        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}¤t_weather=true&hourly=temperature_2m,relativehumidity_2m,weathercode,pressure_msl,windspeed_10m"
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
+        current = data.get('current_weather', {})
+        hourly = data.get('hourly', {})
         return {
-            'temperature': data['main']['temp'],
-            'humidity': data['main']['humidity'],
-            'pressure': data['main']['pressure'],
-            'wind_speed': data['wind']['speed'] if 'wind' in data else 0,
-            'cloudiness': data['clouds']['all'] if 'clouds' in data else 0
+            'temperature': current.get('temperature'),
+            'humidity': next((h for h in hourly['relativehumidity_2m'] if h is not None), None),
+            'pressure': next((p for p in hourly['pressure_msl'] if p is not None), None),
+            'wind_speed': current.get('windspeed'),
+            'weather_code': current.get('weathercode')
         }
     except requests.RequestException:
         return None
 
-# Then use this in main():
-weather_data = get_weather_data(lat, lon)
-if weather_data:
-    ambient_temp = weather_data['temperature']
-    # You can now adjust other parameters based on this data
-else:
-    ambient_temp = st.slider("Temperature (°C)", 15.0, 40.0, 28.0)  # Fallback to manual input
+@st.cache_data
+def get_altitude(lat: float, lon: float) -> float:
+    try:
+        response = requests.get(f"https://api.open-elevation.com/api/v1/lookup?locations={lat},{lon}")
+        return response.json()['results'][0]['elevation']
+    except:
+        return None
 
 if __name__ == "__main__":
     main()
