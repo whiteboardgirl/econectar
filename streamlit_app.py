@@ -328,9 +328,11 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         sun = Sun(lat, lon)
         # Use a timezone-aware datetime object for today
         today = datetime.datetime.now(pytz.utc).date()
+        # Get timezone for the location
+        timezone = pytz.timezone('UTC') #Default Timezone, you can change it to the hive local timezone
         try:
-            sr = sun.get_sunrise_time(today)
-            ss = sun.get_sunset_time(today)
+            sr = sun.get_sunrise_time(today,tz=timezone)
+            ss = sun.get_sunset_time(today,tz=timezone)
             now = datetime.datetime.now(pytz.utc)
 
             return sr < now < ss
