@@ -46,6 +46,46 @@ SPECIES_CONFIG: Dict[str, BeeSpecies] = {
         nest_conductivity=0.11,
         max_cooling=1.8,
         activity_profile="Morning"
+    ),
+    "Tetragonisca angustula": BeeSpecies(
+        name="Tetragonisca angustula",
+        metabolic_rate=0.0070,
+        colony_size_factor=300,
+        ideal_temp=(28.0, 31.0),
+        humidity_range=(60.0, 80.0),
+        nest_conductivity=0.07,
+        max_cooling=1.2,
+        activity_profile="Diurnal"
+    ),
+    "Frieseomelitta nigra": BeeSpecies(
+        name="Frieseomelitta nigra",
+        metabolic_rate=0.0120,
+        colony_size_factor=500,
+        ideal_temp=(32.0, 36.0),
+        humidity_range=(45.0, 65.0),
+        nest_conductivity=0.10,
+        max_cooling=1.7,
+        activity_profile="Morning"
+    ),
+    "Trigona fulviventris": BeeSpecies(
+        name="Trigona fulviventris",
+        metabolic_rate=0.0095,
+        colony_size_factor=800,
+        ideal_temp=(32.0, 36.0),
+        humidity_range=(45.0, 65.0),
+        nest_conductivity=0.10,
+        max_cooling=1.6,
+        activity_profile="Diurnal"
+    ),
+    "Cephalotrigona femorata": BeeSpecies(
+        name="Cephalotrigona femorata",
+        metabolic_rate=0.0110,
+        colony_size_factor=600,
+        ideal_temp=(29.0, 33.0),
+        humidity_range=(50.0, 70.0),
+        nest_conductivity=0.095,
+        max_cooling=1.55,
+        activity_profile="Diurnal"
     )
 }
 
@@ -238,9 +278,9 @@ def main():
     species = SPECIES_CONFIG[species_key]
 
     st.sidebar.markdown(f"**{species.name} Characteristics:**")
-    st.sidebar.write(f"Ideal Temperature: {species.ideal_temp[0]}–{species.ideal_temp[1]} °C")
-    st.sidebar.write(f"Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]} %")
-    st.sidebar.write(f"Activity Profile: {species.activity_profile}")
+    st.sidebar.write(f"Ideal Temperature: {species.ideal_temp[0]}–{species.ideal_temp[1]} °C", key = "ideal_temp_side")
+    st.sidebar.write(f"Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]} %", key = "humidity_side")
+    st.sidebar.write(f"Activity Profile: {species.activity_profile}", key = "activity_side")
 
     colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50, key="colony_size")
     nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0, key="nest_thickness")
@@ -254,28 +294,27 @@ def main():
     gps = parse_gps_input(gps_input)
 
     if gps is None:
-        st.error("Invalid GPS input. Please enter coordinates as 'lat,lon'.")
+        st.error("Invalid GPS input. Please enter coordinates as 'lat,lon'.", key = "gps_error")
         return
 
     lat, lon = gps
     altitude = get_altitude(lat, lon)
 
     if altitude is None:
-        st.warning("Could not retrieve altitude. Please enter altitude manually.", key = "alt_warning")
+        st.warning("Could not retrieve altitude. Please enter altitude manually.", key = "altitude_warning")
         altitude = st.slider("Altitude (m)", 0, 5000, 100, key="manual_altitude")
     else:
-        st.write(f"Altitude: {altitude} m")
+        st.write(f"Altitude: {altitude} m", key = "altitude_write")
 
     weather = get_weather_data(lat, lon)
     if weather and weather.get("temperature") is not None:
         ambient_temp = weather["temperature"]
-        st.write(f"Current Ambient Temperature: {ambient_temp} °C")
+        st.write(f"Current Ambient Temperature: {ambient_temp} °C", key = "ambient_temp_write")
     else:
         st.warning("Weather data unavailable. Please use the slider below.", key = "weather_warning")
         ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0, key="manual_temp")
 
     is_daytime = st.toggle("Is it Daytime?", True, key="is_daytime")
-    time_of_day = st.slider("Time of Day (24-hour format)", 0, 23, 12, key="time_of_day")
 
     if st.button("Run Simulation", key="run_simulation_button"):
         results = simulate_hive_temperature(
@@ -283,22 +322,22 @@ def main():
             ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent
         )
 
-        st.subheader("Simulation Results")
+        st.subheader("Simulation Results", key = "sim_results")
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C", key="base_temp_metric")
-            st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W", key = "metabolic_heat_metric")
+            st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W", key="metabolic_heat_metric")
         with col2:
-            st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}", key = "thermal_resistance_write")
-            st.write("Heat Gain:", f"{results['heat_gain']:.3f}", key = "heat_gain_write")
+            st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}", key="thermal_resistance_write")
+            st.write("Heat Gain:", f"{results['heat_gain']:.3f}", key="heat_gain_write")
 
-        st.subheader("Temperature Status", key = "temp_status")
+        st.subheader("Temperature Status", key="temperature_status")
         if results['base_temp'] < species.ideal_temp[0]:
-            st.error(f"⚠️ Alert: Hive is too cold! Current temperature ({results['base_temp']:.1f}°C) is below the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key = "too_cold")
+            st.error(f"⚠️ Alert: Hive is too cold! Current temperature ({results['base_temp']:.1f}°C) is below the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key="too_cold_alert")
         elif results['base_temp'] > species.ideal_temp[1]:
-            st.error(f"⚠️ Alert: Hive is too hot! Current temperature ({results['base_temp']:.1f}°C) is above the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key = "too_hot")
+            st.error(f"⚠️ Alert: Hive is too hot! Current temperature ({results['base_temp']:.1f}°C) is above the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key="too_hot_alert")
         else:
-            st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key = "just_right")
+            st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key="temp_within_range")
 
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True, key="box_temp_chart")
         st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True, key="hive_3d_chart")
