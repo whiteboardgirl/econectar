@@ -12,7 +12,7 @@ from typing import List, Tuple, Optional, Dict
 @dataclass
 class BeeSpecies:
     name: str
-    metabolic_rate: float  # W per bee unit (arbitrary scale)
+    metabolic_rate: float  # W per bee (arbitrary unit)
     colony_size_factor: int  # base colony size number
     ideal_temp: Tuple[float, float]  # ideal temperature range (min, max) in °C
     humidity_range: Tuple[float, float]  # ideal humidity range in %
@@ -26,8 +26,8 @@ class HiveBox:
     width: float  # in cm
     height: float  # in cm
     depth: float  # in cm
-    cooling_effect: float  # a cooling factor specific to the box
-    propolis_thickness: float = 1.5  # default value in mm
+    cooling_effect: float  # cooling factor specific to the box
+    propolis_thickness: float = 1.5  # in mm
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -117,8 +117,8 @@ def get_altitude(lat: float, lon: float) -> Optional[float]:
 def calculate_metabolic_heat(species: BeeSpecies, colony_size_pct: float, altitude: float) -> float:
     """
     Calculate the metabolic heat output.
-    A simple model: colony size (scaled by colony_size_pct) * metabolic_rate * oxygen_factor.
-    The oxygen factor decreases with altitude.
+    A simple model: (colony size * metabolic_rate * oxygen_factor).
+    Oxygen factor decreases with altitude.
     """
     oxygen_factor = max(0.5, math.exp(-altitude / 7400))
     colony_size = species.colony_size_factor * (colony_size_pct / 100.0)
@@ -127,8 +127,8 @@ def calculate_metabolic_heat(species: BeeSpecies, colony_size_pct: float, altitu
 def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies, is_daytime: bool) -> float:
     """
     Adjust ambient temperature for altitude effects and species activity.
-    Altitude causes a lapse rate (approx. 6.5°C per 1000 m).
-    Activity profile adjustments are applied depending on day or night.
+    Altitude: lapse rate ~6.5°C per 1000 m.
+    Activity profile adjustments: simple additive modifications.
     """
     temp_adj = ambient_temp - (altitude * 6.5 / 1000)
     if species.activity_profile == "Diurnal":
@@ -146,68 +146,64 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
     Simulate the hive's thermal behavior.
     
     Parameters:
-      - surface_area_exponent: exponent to raise the total surface area to increase sensitivity.
-      
+      - surface_area_exponent: exponent applied to total surface area for sensitivity.
+    
     Returns a dictionary containing:
-      - base_temp: Calculated core hive temperature.
-      - box_temps: List of temperatures per hive box.
-      - metabolic_heat: Calculated metabolic heat output.
-      - thermal_resistance: Combined thermal resistance.
-      - heat_gain: Calculated heat gain.
+      - base_temp: core hive temperature.
+      - box_temps: list of temperatures per hive box.
+      - metabolic_heat, thermal_resistance, heat_gain.
     """
+    # Ensure numeric types
+    ambient_temp = float(ambient_temp)
+    nest_thickness = float(nest_thickness)
+    rain_intensity = float(rain_intensity)
+    surface_area_exponent = float(surface_area_exponent)
+
     # Adjust ambient temperature for altitude and species activity
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
-    # Apply rain cooling effect: each 0.1 of rain intensity subtracts ~0.5°C.
+    # Apply rain cooling effect: each 0.1 rain intensity reduces ~0.5°C.
     temp_adj -= (rain_intensity * 5)
 
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
-    # Compute nest resistance (thickness in meters / conductivity) and add a constant resistance
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
     total_resistance = nest_resistance + 0.04
 
-    # Compute total surface area from all boxes (convert cm^2 to m^2)
+    # Compute total surface area from all boxes (cm^2 -> m^2)
     total_surface_area = sum(
         2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
         for box in boxes
     )
-    # Increase sensitivity by raising the total surface area to the provided exponent.
-    heat_gain = (metabolic_heat * total_resistance) / (total_surface_area ** surface_area_exponent)
+    # Debug: output total surface area
+    st.write("Total Surface Area (m^2):", total_surface_area)
+
+    # Increase sensitivity by raising total surface area to the specified exponent.
+    try:
+        adjusted_surface = total_surface_area ** surface_area_exponent
+    except Exception as e:
+        st.error("Error computing adjusted surface area: " + str(e))
+        adjusted_surface = total_surface_area  # fallback
+
+    heat_gain = (metabolic_heat * total_resistance) / adjusted_surface
     cooling = min(species.max_cooling, heat_gain)
 
-    # Determine core hive temperature based on whether ambient is above ideal max
     if temp_adj > species.ideal_temp[1]:
         hive_temp = temp_adj - cooling
     else:
         hive_temp = temp_adj + min(heat_gain, species.ideal_temp[1] - temp_adj)
 
-    # Compute temperatures for each box with additional adjustments from cooling effect and insulation.
+    # Calculate box temperatures
     box_temps = []
     for box in boxes:
         box_temp = hive_temp - box.cooling_effect + (box.propolis_thickness * 0.02)
         box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
         box_temps.append(box_temp)
 
-    return {
-        "base_temp": hive_temp,
-        "box_temps": box_temps,
-        "metabolic_heat": metabolic_heat,
-        "thermal_resistance": total_resistance,
-        "heat_gain": heat_gain
-    }
-
-
-    # Determine core hive temperature based on whether ambient is above ideal max
-    if temp_adj > species.ideal_temp[1]:
-        hive_temp = temp_adj - cooling
-    else:
-        hive_temp = temp_adj + min(heat_gain, species.ideal_temp[1] - temp_adj)
-
-    # Compute temperatures for each box with additional adjustments from cooling effect and insulation.
-    box_temps = []
-    for box in boxes:
-        box_temp = hive_temp - box.cooling_effect + (box.propolis_thickness * 0.02)
-        box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
-        box_temps.append(box_temp)
+    # Debug: output key computed values
+    st.write("Adjusted Ambient Temp:", temp_adj)
+    st.write("Metabolic Heat:", metabolic_heat)
+    st.write("Total Thermal Resistance:", total_resistance)
+    st.write("Heat Gain:", heat_gain)
+    st.write("Core Hive Temperature:", hive_temp)
 
     return {
         "base_temp": hive_temp,
@@ -218,7 +214,7 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
     }
 
 # ---------------------------------------------------------------------------
-# Visualization Functions (Plotly)
+# Visualization Functions (using Plotly)
 # ---------------------------------------------------------------------------
 def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
     """
@@ -240,7 +236,7 @@ def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float]) -> go.F
     """
     x, y, z, temp_values = [], [], [], []
     for box, temp in zip(boxes, box_temps):
-        num_points = 50  # Number of points per box
+        num_points = 50  # number of points per box
         xs = np.random.uniform(0, box.width, num_points)
         ys = np.random.uniform(0, box.depth, num_points)
         zs = np.random.uniform(0, box.height, num_points)
@@ -287,6 +283,7 @@ def main():
     colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50)
     nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0)
     rain_intensity = st.sidebar.slider("Rain Intensity (0 to 1)", 0.0, 1.0, 0.0, step=0.1)
+    surface_area_exponent = st.sidebar.slider("Surface Area Exponent", 1.0, 2.0, 1.0, step=0.1)
 
     # Advanced hive configuration for boxes
     with st.expander("Advanced Hive Configuration"):
@@ -346,7 +343,7 @@ def main():
     # Run the simulation
     results = simulate_hive_temperature(
         species, colony_size_pct, nest_thickness, boxes,
-        ambient_temp, is_daytime, altitude, rain_intensity
+        ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent
     )
 
     st.subheader("Simulation Results")
@@ -357,16 +354,6 @@ def main():
     with col2:
         st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}")
         st.write("Heat Gain:", f"{results['heat_gain']:.3f}")
-
-    # Sidebar: Add slider for surface area sensitivity (exponent)
-    surface_area_exponent = st.sidebar.slider("Surface Area Exponent", 1.0, 2.0, 1.0, step=0.1)
-
-    # Run the simulation with the new parameter:
-    results = simulate_hive_temperature(
-        species, colony_size_pct, nest_thickness, boxes,
-        ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent
-    )
-
 
     # Display interactive plots
     st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
