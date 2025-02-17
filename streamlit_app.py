@@ -100,55 +100,78 @@ def get_altitude(lat: float, lon: float) -> Optional[float]:
 # Thermal Simulation Functions
 # ---------------------------------------------------------------------------
 def calculate_metabolic_heat(species: BeeSpecies, colony_size_pct: float, altitude: float) -> float:
-    oxygen_factor = max(0.5, math.exp(-altitude / 7400))
+    """
+    Calculate metabolic heat output with improved temperature regulation
+    """
+    oxygen_factor = max(0.5, np.exp(-altitude / 7400))
     colony_size = species.colony_size_factor * (colony_size_pct / 100.0)
-    return colony_size * species.metabolic_rate * oxygen_factor
-
-def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies, is_daytime: bool, apply_altitude_adjustment: bool = True) -> float:
-    temp_adj = ambient_temp
-    if apply_altitude_adjustment:
-        temp_adj -= (altitude * 6.5 / 1000)
+    base_metabolic = colony_size * species.metabolic_rate * oxygen_factor
     
+    # Add temperature-dependent metabolic rate adjustment
+    activity_multiplier = 2.5  # Increased base metabolic activity
+    return base_metabolic * activity_multiplier
+
+def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies, is_daytime: bool) -> float:
+    """
+    Adjust temperature based on environmental factors with improved thermal regulation
+    """
+    temp_adj = ambient_temp - (altitude * 6.5 / 1000)
+    
+    # Enhanced activity profile effects
     if species.activity_profile == "Diurnal":
-        temp_adj += 2 if is_daytime else -2
+        temp_adj += 3 if is_daytime else -1  # Adjusted for better temperature maintenance
     elif species.activity_profile == "Morning":
-        temp_adj += 3 if is_daytime else -1
+        temp_adj += 4 if is_daytime else 0   # Improved morning temperature regulation
     else:
-        temp_adj += 1 if is_daytime else -1
+        temp_adj += 2 if is_daytime else -0.5
+    
     return temp_adj
 
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
-                              boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
-                              altitude: float, rain_intensity: float, surface_area_exponent: float,
-                              apply_altitude_adjustment: bool = True) -> Dict:
-    # Adjust ambient temperature based on altitude option and activity
-    temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime, apply_altitude_adjustment)
-    # Apply rain cooling effect: each 0.1 of rain intensity subtracts ~0.4°C now.
-    temp_adj -= (rain_intensity * 4)
+                            boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
+                            altitude: float, rain_intensity: float, surface_area_exponent: float) -> Dict:
+    """
+    Simulate hive temperature with improved thermal calculations
+    """
+    temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
+    temp_adj -= (rain_intensity * 3)  # Reduced rain cooling effect
     
-    metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude) * 1.1  # Increase metabolic heat
+    metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
+    
+    # Improved thermal resistance calculations
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
-    total_resistance = nest_resistance + 0.04
+    propolis_resistance = sum(box.propolis_thickness * 0.015 for box in boxes)  # Added propolis effect
+    total_resistance = nest_resistance + propolis_resistance + 0.08  # Increased base resistance
     
-    # Compute total surface area from all boxes (convert cm^2 to m^2)
     total_surface_area = sum(
         2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
         for box in boxes
     )
     
-    adjusted_surface = total_surface_area ** (surface_area_exponent - 0.1)
-    heat_gain = (metabolic_heat * total_resistance) / adjusted_surface
-    cooling = min(species.max_cooling * 0.8, heat_gain)
+    adjusted_surface = total_surface_area ** surface_area_exponent
     
-    # Determine hive temperature based on ideal range
+    # Enhanced heat gain calculation
+    heat_gain = (metabolic_heat * total_resistance) / adjusted_surface
+    heat_gain *= 1.5  # Increased heat retention factor
+    
+    # Improved cooling mechanism
+    cooling = min(species.max_cooling * 0.7, heat_gain)  # Reduced cooling effect
+    
     if temp_adj > species.ideal_temp[1]:
         hive_temp = temp_adj - cooling
     else:
-        hive_temp = temp_adj + min(heat_gain, species.ideal_temp[1] - temp_adj)
+        temp_difference = species.ideal_temp[1] - temp_adj
+        hive_temp = temp_adj + min(heat_gain, temp_difference)
     
+    # Calculate individual box temperatures with improved thermal distribution
     box_temps = []
     for box in boxes:
-        box_temp = hive_temp - box.cooling_effect + (box.propolis_thickness * 0.01)
+        # Enhanced box temperature calculation
+        box_temp = hive_temp - (box.cooling_effect * 0.7)  # Reduced cooling effect
+        propolis_heating = box.propolis_thickness * 0.03  # Increased propolis heating effect
+        box_temp += propolis_heating
+        
+        # Ensure temperature stays within species-specific bounds
         box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
         box_temps.append(box_temp)
     
