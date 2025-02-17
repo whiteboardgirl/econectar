@@ -224,67 +224,7 @@ def calculate_solar_heat_gain(lat: float, lon: float, is_daytime: bool, day_of_y
     solar_heat_gain = solar_radiation * HIVE_SURFACE_AREA
     return solar_heat_gain
 
-def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
-                              lid_thickness: float, boxes: List[HiveBox], ambient_temp: float,
-                              is_daytime: bool, altitude: float, rain_intensity: float,
-                              surface_area_exponent: float, lat: float, lon: float,
-                              day_of_year: int) -> Dict:
-    """
-    Simulates the temperature inside the hive based on various parameters,
-    including the effect of a closed lid that retains more heat.
-    """
-    # Adjust ambient temperature for altitude, species behavior, and rain
-    temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
-    temp_adj -= (rain_intensity * 3)
-
-    # Calculate heat contributions
-    metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
-    solar_heat_gain = calculate_solar_heat_gain(lat, lon, is_daytime, day_of_year)
-    total_heat = metabolic_heat + solar_heat_gain
-
-    # Calculate thermal resistances: nest, propolis, and lid.
-    nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
-    propolis_resistance = sum(box.propolis_thickness * 0.015 for box in boxes)
-    # Lower LID_CONDUCTIVITY means better insulation.
-    LID_CONDUCTIVITY = 0.02  
-    lid_resistance = (lid_thickness / 1000) / LID_CONDUCTIVITY
-
-    total_resistance = nest_resistance + propolis_resistance + lid_resistance + 0.08
-
-    total_surface_area = sum(
-        2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
-        for box in boxes
-    )
-    adjusted_surface = total_surface_area ** surface_area_exponent
-    adjusted_surface = max(adjusted_surface, 0.0001)
-    heat_gain = (total_heat * total_resistance) / adjusted_surface
-    heat_gain *= 1.5
-    cooling = min(species.max_cooling * 0.7, heat_gain)
-
-    # Determine hive temperature; a higher heat gain raises the temperature.
-    if temp_adj > species.ideal_temp[1]:
-        hive_temp = temp_adj - cooling
-    else:
-        temp_difference = species.ideal_temp[1] - temp_adj
-        hive_temp = temp_adj + min(heat_gain, temp_difference)
-
-    # Calculate temperature for each hive box
-    box_temps = []
-    for box in boxes:
-        box_temp = hive_temp - (box.cooling_effect * 0.7)
-        propolis_heating = box.propolis_thickness * 0.03
-        box_temp += propolis_heating
-        box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
-        box_temps.append(box_temp)
-
-    return {
-        "base_temp": hive_temp,
-        "box_temps": box_temps,
-        "metabolic_heat": metabolic_heat,
-        "solar_heat_gain": solar_heat_gain,
-        "thermal_resistance": total_resistance,
-        "heat_gain": heat_gain
-    }
+    # Sidebar: Bee species and parameters
 
 def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
     labels = [f"Box {box.id}" for box in boxes]
