@@ -25,11 +25,10 @@ class HiveBox:
     cooling_effect: float
     propolis_thickness: float = 1.5
 
-# Updated species configuration with adjusted metabolic rates
 SPECIES_CONFIG: Dict[str, BeeSpecies] = {
     "Melipona": BeeSpecies(
         name="Melipona",
-        metabolic_rate=0.0088,  # Increased from 0.0035
+        metabolic_rate=0.0088,
         colony_size_factor=700,
         ideal_temp=(30.0, 33.0),
         humidity_range=(50.0, 70.0),
@@ -39,7 +38,7 @@ SPECIES_CONFIG: Dict[str, BeeSpecies] = {
     ),
     "Scaptotrigona": BeeSpecies(
         name="Scaptotrigona",
-        metabolic_rate=0.0105,  # Increased from 0.0042
+        metabolic_rate=0.0105,
         colony_size_factor=1000,
         ideal_temp=(31.0, 35.0),
         humidity_range=(40.0, 70.0),
@@ -94,29 +93,6 @@ def calculate_metabolic_heat(species: BeeSpecies, colony_size_pct: float, altitu
     activity_multiplier = 2.5
     return base_metabolic * activity_multiplier
 
-def calculate_solar_heat(time_of_day: int, species: BeeSpecies) -> float:
-    # Simplified model for solar heating:
-    # Peak heat is at noon, decreases towards morning and evening
-    # Assume a bell curve shape for simplicity
-    
-    # Normalize time to a 0 to 1 scale for a bell curve effect
-    normalized_time = abs((time_of_day - 12) / 12)  # 0 at noon, 1 at midnight or midday
-    
-    # A simple bell curve where max heat is at noon
-    solar_factor = 1 - (normalized_time ** 2)  # This gives a peak at noon
-    
-    # Adjust for species activity (assuming species are more active during their profile time)
-    if species.activity_profile == "Diurnal":
-        activity_boost = 1.2 if 6 <= time_of_day < 18 else 0.8
-    elif species.activity_profile == "Morning":
-        activity_boost = 1.3 if 6 <= time_of_day < 12 else 0.7
-    else:  # Evening species
-        activity_boost = 1.3 if 12 <= time_of_day < 18 else 0.7
-    
-    # Base solar heating effect; adjust this value based on empirical data or further research
-    return 5 * solar_factor * activity_boost  # 5°C is an arbitrary high point for solar heating at noon
-
-
 def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies, is_daytime: bool) -> float:
     temp_adj = ambient_temp - (altitude * 6.5 / 1000)
     if species.activity_profile == "Diurnal":
@@ -127,15 +103,26 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
         temp_adj += 2 if is_daytime else -0.5
     return temp_adj
 
+def calculate_solar_heat(time_of_day: int, species: BeeSpecies) -> float:
+    normalized_time = abs((time_of_day - 12) / 12)
+    solar_factor = 1 - (normalized_time ** 2)
+    
+    if species.activity_profile == "Diurnal":
+        activity_boost = 1.2 if 6 <= time_of_day < 18 else 0.8
+    elif species.activity_profile == "Morning":
+        activity_boost = 1.3 if 6 <= time_of_day < 12 else 0.7
+    else:
+        activity_boost = 1.3 if 12 <= time_of_day < 18 else 0.7
+    
+    return 5 * solar_factor * activity_boost
+
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
                               boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
                               altitude: float, rain_intensity: float, surface_area_exponent: float,
                               time_of_day: int) -> Dict:
-    # Basic temperature adjustment
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
     temp_adj -= (rain_intensity * 3)
     
-    # Solar radiation effect based on time of day
     solar_heat = calculate_solar_heat(time_of_day, species)
     temp_adj += solar_heat
     
@@ -249,15 +236,14 @@ def create_hive_boxes(species):
     for box in default_boxes:
         cols = st.columns(4)
         with cols[0]:
-            box.width = st.number_input(f"Box {box.id} Width (cm)", min_value=10, max_value=50, value=int(box.width))
+            box.width = st.number_input(f"Box {box.id} Width (cm)", min_value=10, max_value=50, value=int(box.width), key=f"width_{box.id}")
         with cols[1]:
-            box.height = st.number_input(f"Box {box.id} Height (cm)", min_value=5, max_value=30, value=int(box.height))
+            box.height = st.number_input(f"Box {box.id} Height (cm)", min_value=5, max_value=30, value=int(box.height), key=f"height_{box.id}")
         with cols[2]:
-            box.depth = st.number_input(f"Box {box.id} Depth (cm)", min_value=10, max_value=50, value=int(box.depth))
+            box.depth = st.number_input(f"Box {box.id} Depth (cm)", min_value=10, max_value=50, value=int(box.depth), key=f"depth_{box.id}")
         with cols[3]:
-            box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect", min_value=0.0, max_value=5.0, value=box.cooling_effect, step=0.1)
+            box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect", min_value=0.0, max_value=5.0, value=box.cooling_effect, step=0.1, key=f"cooling_{box.id}")
         boxes.append(box)
-    
     return boxes
 
 def main():
@@ -265,7 +251,7 @@ def main():
     
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
     
-    species_key = st.sidebar.selectbox("Select Bee Species", list(SPECIES_CONFIG.keys()))
+    species_key = st.sidebar.selectbox("Select Bee Species", list(SPECIES_CONFIG.keys()), key="species_select")
     species = SPECIES_CONFIG[species_key]
     
     st.sidebar.markdown(f"**{species.name} Characteristics:**")
@@ -273,15 +259,15 @@ def main():
     st.sidebar.write(f"Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]} %")
     st.sidebar.write(f"Activity Profile: {species.activity_profile}")
     
-    colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50)
-    nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0)
-    rain_intensity = st.sidebar.slider("Rain Intensity (0 to 1)", 0.0, 1.0, 0.0, step=0.1)
-    surface_area_exponent = st.sidebar.slider("Surface Area Exponent", 1.0, 2.0, 1.0, step=0.1)
+    colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50, key="colony_size")
+    nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0, key="nest_thickness")
+    rain_intensity = st.sidebar.slider("Rain Intensity (0 to 1)", 0.0, 1.0, 0.0, step=0.1, key="rain_intensity")
+    surface_area_exponent = st.sidebar.slider("Surface Area Exponent", 1.0, 2.0, 1.0, step=0.1, key="surface_area_exponent")
     
     with st.expander("Advanced Hive Configuration"):
         boxes = create_hive_boxes(species)
     
-    gps_input = st.text_input("Enter GPS Coordinates (lat,lon)", "-3.4653,-62.2159")
+    gps_input = st.text_input("Enter GPS Coordinates (lat,lon)", "-3.4653,-62.2159", key="gps_input")
     gps = parse_gps_input(gps_input)
     
     if gps is None:
@@ -293,7 +279,7 @@ def main():
     
     if altitude is None:
         st.warning("Could not retrieve altitude. Please enter altitude manually.")
-        altitude = st.slider("Altitude (m)", 0, 5000, 100)
+        altitude = st.slider("Altitude (m)", 0, 5000, 100, key="manual_altitude")
     else:
         st.write(f"Altitude: {altitude} m")
     
@@ -303,14 +289,15 @@ def main():
         st.write(f"Current Ambient Temperature: {ambient_temp} °C")
     else:
         st.warning("Weather data unavailable. Please use the slider below.")
-        ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0)
+        ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0, key="manual_temp")
     
-    is_daytime = st.toggle("Is it Daytime?", True)
+    time_of_day = st.slider("Time of Day (24-hour format)", 0, 23, 12, key="time_of_day")
+    is_daytime = 6 <= time_of_day < 18
     
-    if st.button("Run Simulation"):
+    if st.button("Run Simulation", key="run_simulation"):
         results = simulate_hive_temperature(
             species, colony_size_pct, nest_thickness, boxes,
-            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent
+            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent, time_of_day
         )
         
         st.subheader("Simulation Results")
@@ -318,10 +305,10 @@ def main():
         with col1:
             st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C")
             st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W")
-        with col2:
+with col2:
             st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}")
             st.write("Heat Gain:", f"{results['heat_gain']:.3f}")
-        
+
         st.subheader("Temperature Status")
         if results['base_temp'] < species.ideal_temp[0]:
             st.error(f"⚠️ Alert: Hive is too cold! Current temperature ({results['base_temp']:.1f}°C) is below the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
@@ -329,21 +316,9 @@ def main():
             st.error(f"⚠️ Alert: Hive is too hot! Current temperature ({results['base_temp']:.1f}°C) is above the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
         else:
             st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
-        
+
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
         st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True)
-
-# Add time selection
-    time_of_day = st.slider("Time of Day (24-hour format)", 0, 23, 12)
-    is_daytime = 6 <= time_of_day < 18  # Assuming daytime from 6 AM to 6 PM
-    
-    # ... existing code
-    
-    if st.button("Run Simulation"):
-        results = simulate_hive_temperature(
-            species, colony_size_pct, nest_thickness, boxes,
-            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent, time_of_day
-        )
 
 if __name__ == "__main__":
     main()
