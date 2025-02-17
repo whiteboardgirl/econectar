@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from typing import List, Tuple, Dict
 import datetime
 import pytz
-import os  # For environment variables
+from timezonefinder import TimezoneFinder  # Added
+import os
 
 @dataclass
 class BeeSpecies:
@@ -369,19 +370,24 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         sun = Sun(lat, lon)
         today = datetime.date.today()
 
-        try:
-            # Determine local timezone
-            timezone_str = get_timezone(lat, lon)
-            if timezone_str:
-                timezone = pytz.timezone(timezone_str)
-            else:
-                timezone = pytz.utc  # Default to UTC if timezone lookup fails
+        # Determine local timezone
+        tf = TimezoneFinder()
+        timezone_str = tf.timezone_at(lat=lat, lng=lon)
+        if timezone_str:
+            timezone = pytz.timezone(timezone_str)
+        else:
+            timezone = pytz.utc  # Default to UTC if timezone lookup fails
+            st.warning("Could not determine local timezone. Using UTC as default.")
 
+        try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
             now = datetime.datetime.now(timezone)
 
-            return timezone.localize(sr) < now and now < timezone.localize(ss)
+            sr_localized = timezone.localize(datetime.datetime.combine(today, sr.time()))
+            ss_localized = timezone.localize(datetime.datetime.combine(today, ss.time()))
+
+            return sr_localized < now < ss_localized
 
         except SunTimeException as e:
             st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
@@ -392,33 +398,6 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
         return True
-
-@st.cache_data(show_spinner=False)
-def get_timezone(lat: float, lon: float) -> str | None:
-    """
-    Fetches the timezone for given coordinates using the TimezoneDB API.
-    """
-    api_key = os.environ.get("TIMEZONEDB_API_KEY")  # Get API key from environment variable
-    if not api_key:
-        st.warning("TimezoneDB API key not found in environment variables. Using UTC as default.")
-        return None
-
-    url = f"http://api.timezonedb.com/v2.1/get-time-zone?key={api_key}&format=json&by=position&lat={lat}&lng={lon}"
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        if data and data.get("status") == "OK":
-            return data.get("zoneName")
-        else:
-            st.warning(f"TimezoneDB API error: {data.get('message')}")
-            return None
-    except requests.RequestException as e:
-        st.error(f"Failed to retrieve timezone data: {e}")
-        return None
-    except Exception as e:
-        st.error(f"An unexpected error occurred: {e}")
-        return None
 
 def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
