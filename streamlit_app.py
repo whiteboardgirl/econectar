@@ -294,36 +294,20 @@ def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species:
     )
     return fig
 
-def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float]) -> go.Figure:
-    x, y, z, temp_values = [], [], [], []
-    for box, temp in zip(boxes, box_temps):
-        num_points = 50
-        xs = np.random.uniform(0, box.width, num_points)
-        ys = np.random.uniform(0, box.depth, num_points)
-        zs = np.random.uniform(0, box.height, num_points)
-        x.extend(xs)
-        y.extend(ys)
-        z.extend(zs)
-        temp_values.extend([temp] * num_points)
-
-    fig = go.Figure(data=[go.Scatter3d(
-        x=x, y=y, z=z,
-        mode='markers',
-        marker=dict(
-            size=4,
-            color=temp_values,
-            colorscale='YlOrRd',
-            colorbar=dict(title="Temp (°C)")
-        )
+def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
+    labels = [f"Box {box.id}" for box in boxes]
+    fig = go.Figure(data=[go.Bar(
+        x=labels,
+        y=box_temps,
+        marker_color='indianred',
+        text=[f"{temp:.1f}°C" for temp in box_temps],
+        textposition='auto',
     )])
-
     fig.update_layout(
-        title="3D Visualization of Hive Structure",
-        scene=dict(
-            xaxis_title="Width (cm)",
-            yaxis_title="Depth (cm)",
-            zaxis_title="Height (cm)"
-        )
+        title="Temperature in Hive Boxes",
+        xaxis_title="Box ID",
+        yaxis_title="Temperature (°C)",
+        yaxis=dict(range=[species.ideal_temp[0] - 2, species.ideal_temp[1] + 2])
     )
     return fig
 
@@ -366,10 +350,12 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
     """
     try:
         from suntime import Sun, SunTimeException
+        import datetime
+        import pytz
+        from timezonefinder import TimezoneFinder
 
         sun = Sun(lat, lon)
         today = datetime.date.today()
-
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
 
@@ -378,15 +364,18 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         else:
             timezone = pytz.utc
             st.warning("Could not determine local timezone. Using UTC as default.")
+            timezone = pytz.utc
 
         try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
-            now = datetime.datetime.now(timezone)
-            sr_localized = timezone.localize(datetime.datetime.combine(today, sr.time()))
-            ss_localized = timezone.localize(datetime.datetime.combine(today, ss.time()))
 
-            return sr_localized < now < ss_localized
+            # Make sure that now, sr and ss are all timezone-aware
+            now = datetime.datetime.now(timezone)
+            sr = timezone.localize(datetime.datetime.combine(today, sr.time()))
+            ss = timezone.localize(datetime.datetime.combine(today, ss.time()))
+
+            return sr < now < ss
 
         except SunTimeException as e:
             st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
@@ -397,6 +386,7 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
         return True
+
 @st.cache_data(show_spinner=False)
 def get_timezone(lat: float, lon: float) -> str | None:
     """
@@ -423,6 +413,7 @@ def get_timezone(lat: float, lon: float) -> str | None:
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
         return None
+
 def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
@@ -469,14 +460,23 @@ def main():
         else:
             st.warning("Weather data unavailable. Please use the slider below.")
             ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0)
-
+        
     if st.button("Run Simulation"):
         day_of_year = datetime.datetime.now().timetuple().tm_yday
 
         results = simulate_hive_temperature(
-            species, colony_size_pct, nest_thickness, boxes,
-            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent,
-            lat, lon, day_of_year
+            species=species,
+            colony_size_pct=colony_size_pct,
+            nest_thickness=nest_thickness,
+            boxes=boxes,
+            ambient_temp=ambient_temp,
+            is_daytime=is_daytime,
+            altitude=altitude,
+            rain_intensity=rain_intensity,
+            surface_area_exponent=surface_area_exponent,
+            lat=lat,
+            lon=lon,
+            day_of_year=day_of_year
         )
 
         st.subheader("Simulation Results")
@@ -500,7 +500,7 @@ def main():
             st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
 
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
-        st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True)
+        st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"], species), use_container_width=True)
 
 if __name__ == "__main__":
     main()
