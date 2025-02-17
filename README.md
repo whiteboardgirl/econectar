@@ -1,1 +1,1 @@
-This is a simultion for stingless hive temperature.
+This is a simulation for stingless hive temperature.
