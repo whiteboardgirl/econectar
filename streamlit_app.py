@@ -107,14 +107,16 @@ def plot_organic_hive_structure(boxes, temperatures):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     
+    x, y, z, sizes, colors = [], [], [], [], []
     for box, temp in zip(boxes, temperatures):
         num_pots = int(temp * 5)  # Arbitrary scaling for visualization
-        x = np.random.uniform(0, box.width, num_pots)
-        y = np.random.uniform(0, box.depth, num_pots)
-        z = np.random.uniform(0, box.height, num_pots)
-        sizes = np.random.uniform(10, 30, num_pots)
-        
-        scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=temp, cmap='YlOrRd')
+        x.extend(np.random.uniform(0, box.width, num_pots))
+        y.extend(np.random.uniform(0, box.depth, num_pots))
+        z.extend(np.random.uniform(0, box.height, num_pots))
+        sizes.extend(np.random.uniform(10, 30, num_pots))
+        colors.extend([temp] * num_pots)
+    
+    scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=colors, cmap='YlOrRd')
     
     ax.set_xlabel('Width (cm)')
     ax.set_ylabel('Depth (cm)')
@@ -124,6 +126,7 @@ def plot_organic_hive_structure(boxes, temperatures):
     fig.colorbar(scatter, label='Temperature (°C)')
     
     return fig
+
 
 def plot_curved_hive_surface(boxes):
     fig = plt.figure(figsize=(10, 8))
