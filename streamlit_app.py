@@ -138,31 +138,25 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
 # 3D Visualization Functions
 # ========================
 
-def plot_hive_temperature_surface(boxes, temperatures):
+def plot_hive_honey_distribution(boxes, honey_volumes):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     
-    x = np.array([box.width for box in boxes])
-    y = np.array([box.height for box in boxes])
-    z = np.array(temperatures)
-    
-    # Create a meshgrid
-    X, Y = np.meshgrid(x, y)
-    
-    # Create a 2D Z array (repeat the temperatures for each y value)
-    Z = np.tile(z, (len(y), 1))
-    
-    surf = ax.plot_surface(X, Y, Z, cmap='viridis')
+    for box, honey_volume in zip(boxes, honey_volumes):
+        # Generate random positions for honey pots within the box dimensions
+        num_pots = int(honey_volume / 10)  # Assume each pot holds about 10 ml
+        x = np.random.uniform(0, box.width, num_pots)
+        y = np.random.uniform(0, box.height, num_pots)
+        z = np.random.uniform(0, honey_volume, num_pots)
+        
+        ax.scatter(x, y, z, s=50, alpha=0.6)
     
     ax.set_xlabel('Width (cm)')
     ax.set_ylabel('Height (cm)')
-    ax.set_zlabel('Temperature (°C)')
-    ax.set_title('Hive Temperature Distribution')
-    
-    fig.colorbar(surf, shrink=0.5, aspect=5)
+    ax.set_zlabel('Honey Volume (ml)')
+    ax.set_title('Stingless Bee Honey Pot Distribution')
     
     return fig
-
 
 def plot_box_characteristics_3d(boxes, temperatures):
     fig = plt.figure(figsize=(10, 8))
