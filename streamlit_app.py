@@ -2,7 +2,6 @@ import streamlit as st
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import requests
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
@@ -54,16 +53,13 @@ SPECIES_CONFIG = {
 @dataclass
 class Box:
     id: int
-    width: float  # cm
-    height: float  # cm
-    depth: float  # cm
+    width: float
+    height: float
+    depth: float
     cooling_effect: float
-    propolis_thickness: float = 1.5  # mm
+    propolis_thickness: float = 1.5
 
 def calculate_box_surface_area(width_cm: float, height_cm: float, depth_cm: float) -> float:
-    """
-    Calculate the total surface area for a rectangular box in square meters.
-    """
     width_m, height_m, depth_m = width_cm / 100, height_cm / 100, depth_cm / 100
     return 2 * (width_m * depth_m + width_m * height_m + depth_m * height_m)
 
@@ -106,50 +102,6 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
         'thermal_resistance': total_resistance
     }
 
-def plot_organic_hive_structure(boxes, temperatures):
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    x, y, z, sizes, colors = [], [], [], [], []
-    for box, temp in zip(boxes, temperatures):
-        num_pots = int(temp * 5)  # Arbitrary scaling for visualization
-        x.extend(np.random.uniform(0, box.width, num_pots))
-        y.extend(np.random.uniform(0, box.depth, num_pots))
-        z.extend(np.random.uniform(0, box.height, num_pots))
-        sizes.extend(np.random.uniform(10, 30, num_pots))
-        colors.extend([temp] * num_pots)
-    
-    scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=colors, cmap='YlOrRd')
-    
-    ax.set_xlabel('Width (cm)')
-    ax.set_ylabel('Depth (cm)')
-    ax.set_zlabel('Height (cm)')
-    ax.set_title('Stingless Bee Hive - Organic Structure')
-    
-    fig.colorbar(scatter, label='Temperature (°C)')
-    
-    return fig
-
-def plot_curved_hive_surface(boxes):
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    for box in boxes:
-        x = np.linspace(0, box.width, 50)
-        y = np.linspace(0, box.depth, 50)
-        X, Y = np.meshgrid(x, y)
-        
-        Z = 5 * np.sin(X/10) + 5 * np.cos(Y/10)
-        
-        ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.7)
-    
-    ax.set_xlabel('Width (cm)')
-    ax.set_ylabel('Depth (cm)')
-    ax.set_zlabel('Height (cm)')
-    ax.set_title('Stingless Bee Hive - Curved Interior Surface')
-    
-    return fig
-
 def render_species_controls():
     species_name = st.sidebar.selectbox("Bee Species", list(SPECIES_CONFIG.keys()))
     species = SPECIES_CONFIG[species_name]
@@ -170,16 +122,15 @@ def main():
 
     species, params = render_species_controls()
 
-    # Update box dimensions based on selected species
-    if 'boxes' not in st.session_state or st.session_state.last_species != species.name:
-        if species.name == "Melipona":  # INPA type (Medium)
+    if 'boxes' not in st.session_state:
+        if species.name == "Melipona":
             st.session_state.boxes = [
                 Box(1, 23, 6, 23, 1.0),
                 Box(2, 23, 6, 23, 0.5),
                 Box(3, 23, 6, 23, 2.0),
                 Box(4, 23, 6, 23, 1.5)
             ]
-        elif species.name == "Tetragonula":  # AF type (Small)
+        else:
             st.session_state.boxes = [
                 Box(1, 13, 5, 13, 1.0),
                 Box(2, 13, 5, 13, 0.5),
@@ -187,15 +138,7 @@ def main():
                 Box(4, 13, 5, 13, 1.5),
                 Box(5, 13, 5, 13, 1.0)
             ]
-        else:  # Scaptotrigona (Large)
-            st.session_state.boxes = [
-                Box(1, 25, 7, 25, 1.0),
-                Box(2, 25, 7, 25, 0.5),
-                Box(3, 25, 7, 25, 2.0),
-                Box(4, 25, 7, 25, 1.5)
-            ]
-        st.session_state.last_species = species.name
-        
+
     col1, col2 = st.columns(2)
     with col1:
         lat, lon = map(float, st.text_input("GPS Coordinates", "-3.4653,-62.2159").split(','))
@@ -205,13 +148,6 @@ def main():
         is_daytime = st.toggle("Daytime", True)
 
     results = calculate_hive_temperature(species, params, st.session_state.boxes, ambient_temp, is_daytime, altitude)
-        fig, ax = plt.subplots()
-ax.bar([f"Box {i+1}" for i in range(len(results['box_temps']))], results['box_temps'])
-ax.set_ylim(species.ideal_temp[0]-2, species.ideal_temp[1]+2)
-ax.set_xlabel("Box")
-ax.set_ylabel("Temperature (°C)")
-ax.set_title(f"Hive Temperature Distribution - {species.name}")
-st.pyplot(fig)
 
     st.subheader("Thermal Profile")
     col1, col2 = st.columns(2)
@@ -232,15 +168,6 @@ st.pyplot(fig)
             with cols[2]: box.depth = st.number_input(f"Depth Box {box.id}", 10, 30, int(box.depth))
             with cols[3]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
             with cols[4]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
-
-    st.subheader("3D Visualizations")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.pyplot(plot_organic_hive_structure(st.session_state.boxes, results['box_temps']))
-    with col2:
-        st.pyplot(plot_curved_hive_surface(st.session_state.boxes))
-
-
 
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
