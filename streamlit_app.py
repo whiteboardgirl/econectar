@@ -161,6 +161,39 @@ def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species:
     )
     return fig
 
+def create_hive_boxes(species):
+    if species.name == "Melipona":
+        default_boxes = [
+            HiveBox(1, 23, 6, 23, 1.0),
+            HiveBox(2, 23, 6, 23, 0.5),
+            HiveBox(3, 23, 6, 23, 2.0),
+            HiveBox(4, 23, 6, 23, 1.5)
+        ]
+    else:
+        default_boxes = [
+            HiveBox(1, 13, 5, 13, 1.0),
+            HiveBox(2, 13, 5, 13, 0.5),
+            HiveBox(3, 13, 5, 13, 2.0),
+            HiveBox(4, 13, 5, 13, 1.5),
+            HiveBox(5, 13, 5, 13, 1.0)
+        ]
+    
+    boxes = []
+    for box in default_boxes:
+        cols = st.columns(4)
+        with cols[0]:
+            box.width = st.number_input(f"Box {box.id} Width (cm)", min_value=10, max_value=50, value=int(box.width))
+        with cols[1]:
+            box.height = st.number_input(f"Box {box.id} Height (cm)", min_value=5, max_value=30, value=int(box.height))
+        with cols[2]:
+            box.depth = st.number_input(f"Box {box.id} Depth (cm)", min_value=10, max_value=50, value=int(box.depth))
+        with cols[3]:
+            box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect", min_value=0.0, max_value=5.0, value=box.cooling_effect, step=0.1)
+        boxes.append(box)
+    
+    return boxes
+
+
 def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float]) -> go.Figure:
     x, y, z, temp_values = [], [], [], []
     for box, temp in zip(boxes, box_temps):
