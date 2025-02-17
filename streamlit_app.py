@@ -295,22 +295,53 @@ def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species:
     return fig
 
 def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
-    labels = [f"Box {box.id}" for box in boxes]
-    fig = go.Figure(data=[go.Bar(
-        x=labels,
-        y=box_temps,
-        marker_color='indianred',
-        text=[f"{temp:.1f}°C" for temp in box_temps],
-        textposition='auto',
-    )])
-    fig.update_layout(
-        title="Temperature in Hive Boxes",
-        xaxis_title="Box ID",
-        yaxis_title="Temperature (°C)",
-        yaxis=dict(range=[species.ideal_temp[0] - 2, species.ideal_temp[1] + 2])
-    )
-    return fig
+    """
+    Creates a 3D visualization of the hive boxes with temperature mapping.
+    """
+    fig = go.Figure()
 
+    z_offset = 0
+    for i, (box, temp) in enumerate(zip(boxes, box_temps)):
+        # Calculate vertices for the box
+        x = [-box.width/2, box.width/2, box.width/2, -box.width/2]
+        y = [-box.depth/2, -box.depth/2, box.depth/2, box.depth/2]
+        z = [z_offset] * 4
+
+        # Add bottom face
+        fig.add_trace(go.Mesh3d(
+            x=x, y=y, z=z,
+            i=[0], j=[1], k=[2],
+            colorscale=[[0, 'blue'], [0.5, 'yellow'], [1, 'red']],
+            intensity=[temp],
+            name=f'Box {box.id}'
+        ))
+
+        # Add top face
+        z_top = [z_offset + box.height] * 4
+        fig.add_trace(go.Mesh3d(
+            x=x, y=y, z=z_top,
+            i=[0], j=[1], k=[2],
+            colorscale=[[0, 'blue'], [0.5, 'yellow'], [1, 'red']],
+            intensity=[temp],
+            showscale=False
+        ))
+
+        z_offset += box.height + 2  # Add spacing between boxes
+
+    fig.update_layout(
+        title="3D Hive Structure with Temperature Distribution",
+        scene=dict(
+            xaxis_title="Width (cm)",
+            yaxis_title="Depth (cm)",
+            zaxis_title="Height (cm)",
+            camera=dict(
+                eye=dict(x=1.5, y=1.5, z=1.5)
+            )
+        ),
+        showlegend=True
+    )
+
+    return fig
 def create_hive_boxes(species):
     if species.name == "Melipona":
         default_boxes = [
