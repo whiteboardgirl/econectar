@@ -415,31 +415,49 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         return True
 
 @st.cache_data(show_spinner=False)
-def get_timezone(lat: float, lon: float) -> str | None:
+def is_daytime_calc(lat: float, lon: float) -> bool:
     """
-    Fetches the timezone for given coordinates using the TimezoneDB API.
+    Determine if it's daytime based on GPS coordinates.
+    Uses the `suntime` library and local timezone for calculations.
     """
-    api_key = os.environ.get("TIMEZONEDB_API_KEY")  # Get API key from environment variable
-    if not api_key:
-        st.warning("TimezoneDB API key not found in environment variables. Using UTC as default.")
-        return None
-
-    url = f"http://api.timezonedb.com/v2.1/get-time-zone?key={api_key}&format=json&by=position&lat={lat}&lng={lon}"
     try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        if data and data.get("status") == "OK":
-            return data.get("zoneName")
+        from suntime import Sun, SunTimeException
+        import datetime
+        import pytz
+        from timezonefinder import TimezoneFinder
+
+        sun = Sun(lat, lon)
+        today = datetime.datetime.now().date()
+
+        tf = TimezoneFinder()
+        timezone_str = tf.timezone_at(lat=lat, lng=lon)
+        if timezone_str:
+            local_tz = pytz.timezone(timezone_str)
         else:
-            st.warning(f"TimezoneDB API error: {data.get('message')}")
-            return None
-    except requests.RequestException as e:
-        st.error(f"Failed to retrieve timezone data: {e}")
-        return None
+            local_tz = pytz.utc
+            st.warning("Could not determine local timezone. Using UTC as default.")
+
+        try:
+            # Get sunrise and sunset as datetime objects
+            sr = sun.get_local_sunrise_time(today)
+            ss = sun.get_local_sunset_time(today)
+
+            # Get current time
+            now = datetime.datetime.now(local_tz)
+
+            # Compare with current time
+            return sr < now < ss
+
+        except SunTimeException as e:
+            st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
+            return True
+
+    except ImportError:
+        st.warning("`suntime` library not found. Please install it for accurate daytime calculation.")
+        return True
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
-        return None
+        return True
 
 def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
