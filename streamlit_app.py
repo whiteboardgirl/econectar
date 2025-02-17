@@ -301,4 +301,4 @@ def main():
             st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
         
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
-        st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width
+        st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True)
