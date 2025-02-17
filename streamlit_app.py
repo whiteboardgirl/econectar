@@ -359,31 +359,56 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
 
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
-
         if timezone_str:
-            timezone = pytz.timezone(timezone_str)
+            local_tz = pytz.timezone(timezone_str)
         else:
-            timezone = pytz.utc
+            local_tz = pytz.utc
             st.warning("Could not determine local timezone. Using UTC as default.")
+
+        def ensure_datetime(value, date_context):
+            """
+            Convert value to a datetime object.
+            - If already a datetime, return as-is.
+            - If a time, combine with date_context.
+            - If a date, combine with midnight.
+            """
+            if isinstance(value, datetime.datetime):
+                return value
+            elif isinstance(value, datetime.time):
+                return datetime.datetime.combine(date_context, value)
+            elif isinstance(value, datetime.date):
+                # If only a date is provided, assume midnight.
+                return datetime.datetime.combine(value, datetime.time.min)
+            else:
+                raise ValueError("Value cannot be converted to datetime.")
 
         try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
 
-            # Get current time in the determined timezone
-            now = datetime.datetime.now(timezone)
+            sr_dt = ensure_datetime(sr, today)
+            ss_dt = ensure_datetime(ss, today)
 
-            # Ensure sr and ss are timezone-aware datetime objects
-            sr_localized = timezone.localize(datetime.datetime.combine(today, sr))
-            ss_localized = timezone.localize(datetime.datetime.combine(today, ss))
+            # Localize or convert to local timezone
+            if sr_dt.tzinfo is None:
+                sr_dt = local_tz.localize(sr_dt)
+            else:
+                sr_dt = sr_dt.astimezone(local_tz)
 
-            return sr_localized <= now <= ss_localized
+            if ss_dt.tzinfo is None:
+                ss_dt = local_tz.localize(ss_dt)
+            else:
+                ss_dt = ss_dt.astimezone(local_tz)
+
+            now = datetime.datetime.now(local_tz)
+            return sr_dt < now < ss_dt
 
         except SunTimeException as e:
             st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
             return True
+
     except ImportError:
-        st.warning("`suntime` library not found.  Please install it for accurate daytime calculation.")
+        st.warning("`suntime` library not found. Please install it for accurate daytime calculation.")
         return True
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
