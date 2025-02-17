@@ -356,6 +356,7 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
 
         sun = Sun(lat, lon)
         today = datetime.date.today()
+
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
 
@@ -364,18 +365,17 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         else:
             timezone = pytz.utc
             st.warning("Could not determine local timezone. Using UTC as default.")
-            timezone = pytz.utc
 
         try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
 
-            # Make sure that now, sr and ss are all timezone-aware
+            # Ensure sr and ss are timezone-aware datetime objects
             now = datetime.datetime.now(timezone)
-            sr = timezone.localize(datetime.datetime.combine(today, sr.time()))
-            ss = timezone.localize(datetime.datetime.combine(today, ss.time()))
+            sr_localized = timezone.localize(datetime.datetime.combine(today, sr))
+            ss_localized = timezone.localize(datetime.datetime.combine(today, ss))
 
-            return sr < now < ss
+            return sr_localized < now < ss_localized
 
         except SunTimeException as e:
             st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
@@ -460,7 +460,7 @@ def main():
         else:
             st.warning("Weather data unavailable. Please use the slider below.")
             ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0)
-        
+
     if st.button("Run Simulation"):
         day_of_year = datetime.datetime.now().timetuple().tm_yday
 
