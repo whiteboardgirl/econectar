@@ -595,7 +595,8 @@ def main():
         help="Affects how heat dissipates based on hive surface area. Higher values mean more heat loss through surfaces."
     )
 
-    with st.expander("Advanced Hive Configuration", help="Configure detailed parameters for each hive box"):
+    with st.expander("Advanced Hive Configuration"):
+        st.info("Configure detailed parameters for each hive box. These settings affect heat distribution and retention.")
         boxes = create_hive_boxes(species)
         gps_input = st.text_input(
             "Enter GPS Coordinates (lat,lon)", 
