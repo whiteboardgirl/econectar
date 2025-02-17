@@ -218,12 +218,10 @@ def calculate_solar_heat_gain(lat: float, lon: float, is_daytime: bool, day_of_y
         return 0.0
 
     SOLAR_CONSTANT = 1367  # W/m^2
-    # Simplified solar angle calculation
     solar_angle = np.cos(np.radians(23.45 * np.sin(np.radians(360 * (day_of_year + 284) / 365))))
     solar_radiation = SOLAR_CONSTANT * solar_angle * 0.7
     HIVE_SURFACE_AREA = 0.25  # m^2
     solar_heat_gain = solar_radiation * HIVE_SURFACE_AREA
-
     return solar_heat_gain
 
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
@@ -233,38 +231,37 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
                               day_of_year: int) -> Dict:
     """
     Simulates the temperature inside the hive based on various parameters,
-    including the effect of a closed lid that helps retain heat.
+    including the effect of a closed lid that retains more heat.
     """
     # Adjust ambient temperature for altitude, species behavior, and rain
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
     temp_adj -= (rain_intensity * 3)
 
-    # Calculate heat contributions from metabolism and solar gain
+    # Calculate heat contributions
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
     solar_heat_gain = calculate_solar_heat_gain(lat, lon, is_daytime, day_of_year)
     total_heat = metabolic_heat + solar_heat_gain
 
-    # Calculate thermal resistances: nest wall, propolis, and now lid resistance
+    # Calculate thermal resistances: nest, propolis, and lid.
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
     propolis_resistance = sum(box.propolis_thickness * 0.015 for box in boxes)
-    LID_CONDUCTIVITY = 0.05  # Assumed conductivity for the lid material
+    # Lower LID_CONDUCTIVITY means better insulation.
+    LID_CONDUCTIVITY = 0.02  
     lid_resistance = (lid_thickness / 1000) / LID_CONDUCTIVITY
 
     total_resistance = nest_resistance + propolis_resistance + lid_resistance + 0.08
 
-    # Calculate total surface area of all boxes (in m^2)
     total_surface_area = sum(
         2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
         for box in boxes
     )
     adjusted_surface = total_surface_area ** surface_area_exponent
-    adjusted_surface = max(adjusted_surface, 0.0001)  # Prevent division by zero
-
+    adjusted_surface = max(adjusted_surface, 0.0001)
     heat_gain = (total_heat * total_resistance) / adjusted_surface
     heat_gain *= 1.5
     cooling = min(species.max_cooling * 0.7, heat_gain)
 
-    # Determine the base hive temperature
+    # Determine hive temperature; a higher heat gain raises the temperature.
     if temp_adj > species.ideal_temp[1]:
         hive_temp = temp_adj - cooling
     else:
@@ -311,15 +308,11 @@ def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species
     Creates a 3D visualization of the hive boxes with temperature mapping.
     """
     fig = go.Figure()
-
     z_offset = 0
     for i, (box, temp) in enumerate(zip(boxes, box_temps)):
-        # Calculate vertices for the box
         x = [-box.width/2, box.width/2, box.width/2, -box.width/2]
         y = [-box.depth/2, -box.depth/2, box.depth/2, box.depth/2]
         z = [z_offset] * 4
-
-        # Add bottom face
         fig.add_trace(go.Mesh3d(
             x=x, y=y, z=z,
             i=[0], j=[1], k=[2],
@@ -327,8 +320,6 @@ def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species
             intensity=[temp],
             name=f'Box {box.id}'
         ))
-
-        # Add top face
         z_top = [z_offset + box.height] * 4
         fig.add_trace(go.Mesh3d(
             x=x, y=y, z=z_top,
@@ -336,18 +327,14 @@ def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species
             intensity=[temp],
             showscale=False
         ))
-
-        z_offset += box.height + 2  # Spacing between boxes
-
+        z_offset += box.height + 2
     fig.update_layout(
         title="3D Hive Structure with Temperature Distribution",
         scene=dict(
             xaxis_title="Width (cm)",
             yaxis_title="Depth (cm)",
             zaxis_title="Height (cm)",
-            camera=dict(
-                eye=dict(x=1.5, y=1.5, z=1.5)
-            )
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
         ),
         showlegend=True
     )
@@ -369,7 +356,6 @@ def create_hive_boxes(species):
             HiveBox(4, 13, 5, 13, 1.5),
             HiveBox(5, 13, 5, 13, 1.0)
         ]
-
     boxes = []
     for box in default_boxes:
         cols = st.columns(4)
@@ -388,15 +374,13 @@ def create_hive_boxes(species):
 @st.cache_data(show_spinner=False)
 def is_daytime_calc(lat: float, lon: float) -> bool:
     """
-    Determine if it's daytime based on GPS coordinates.
-    Uses the `suntime` library and local timezone for calculations.
+    Determines if it's daytime based on GPS coordinates.
+    This version uses the sunrise and sunset times (converted to local time)
+    for a more accurate check.
     """
     try:
-        from suntime import Sun, SunTimeException
-        import datetime
-        import pytz
+        from suntime import Sun
         from timezonefinder import TimezoneFinder
-
         sun = Sun(lat, lon)
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
@@ -406,34 +390,25 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
 
         now = datetime.datetime.now(local_tz)
         today = now.date()
-
-        try:
-            sr = sun.get_local_sunrise_time(today)
-            ss = sun.get_local_sunset_time(today)
-            if sr.tzinfo is None:
-                sr = local_tz.localize(sr)
-            if ss.tzinfo is None:
-                ss = local_tz.localize(ss)
-            return sr < now < ss
-        except SunTimeException as e:
-            st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
-            return True
-
-    except ImportError:
-        st.warning("`suntime` library not found. Please install it for accurate daytime calculation.")
-        return True
+        # Get sunrise and sunset times and localize if needed
+        sr = sun.get_sunrise_time(today)
+        ss = sun.get_sunset_time(today)
+        if sr.tzinfo is None:
+            sr = local_tz.localize(sr)
+        if ss.tzinfo is None:
+            ss = local_tz.localize(ss)
+        return sr <= now <= ss
     except Exception as e:
-        st.error(f"An unexpected error occurred: {e}")
+        st.error(f"Error in is_daytime_calc: {e}")
         return True
 
 def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
 
-    # Sidebar: Bee species selection and parameters
+    # Sidebar: Bee species and parameters
     species_key = st.sidebar.selectbox("Select Bee Species", list(SPECIES_CONFIG.keys()))
     species = SPECIES_CONFIG[species_key]
-
     st.sidebar.markdown(f"**{species.name} Characteristics:**")
     st.sidebar.write(f"Ideal Temperature: {species.ideal_temp[0]}–{species.ideal_temp[1]} °C")
     st.sidebar.write(f"Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]} %")
@@ -441,12 +416,10 @@ def main():
 
     colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50)
     nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0)
-    # New slider for lid thickness
     lid_thickness = st.sidebar.slider("Lid Thickness (mm)", 1.0, 10.0, 5.0)
     rain_intensity = st.sidebar.slider("Rain Intensity (0 to 1)", 0.0, 1.0, 0.0, step=0.1)
     surface_area_exponent = st.sidebar.slider("Surface Area Exponent", 1.0, 2.0, 1.0, step=0.1)
 
-    # Advanced hive configuration
     with st.expander("Advanced Hive Configuration"):
         boxes = create_hive_boxes(species)
         gps_input = st.text_input("Enter GPS Coordinates (lat,lon)", "-3.4653,-62.2159")
@@ -454,19 +427,15 @@ def main():
         if gps is None:
             st.error("Invalid GPS input. Please enter coordinates as 'lat,lon'.")
             return
-
         lat, lon = gps
-
         altitude = get_altitude(lat, lon)
         if altitude is None:
             st.warning("Could not retrieve altitude. Please enter altitude manually.")
             altitude = st.slider("Altitude (m)", 0, 5000, 100)
         else:
             st.write(f"Altitude: {altitude} m")
-
         is_daytime = is_daytime_calc(lat, lon)
         st.write(f"It is daytime: {is_daytime}")
-
         weather = get_weather_data(lat, lon)
         if weather and weather.get("temperature") is not None:
             ambient_temp = weather["temperature"]
@@ -477,7 +446,6 @@ def main():
 
     if st.button("Run Simulation"):
         day_of_year = datetime.datetime.now().timetuple().tm_yday
-
         results = simulate_hive_temperature(
             species=species,
             colony_size_pct=colony_size_pct,
@@ -493,7 +461,6 @@ def main():
             lon=lon,
             day_of_year=day_of_year
         )
-
         st.subheader("Simulation Results")
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -504,7 +471,6 @@ def main():
         with col3:
             st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}")
             st.write("Heat Gain:", f"{results['heat_gain']:.3f}")
-
         st.subheader("Temperature Status")
         if results['base_temp'] < species.ideal_temp[0]:
             st.error(f"⚠️ Alert: Hive is too cold! Current temperature ({results['base_temp']:.1f}°C) is below the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
@@ -512,7 +478,6 @@ def main():
             st.error(f"⚠️ Alert: Hive is too hot! Current temperature ({results['base_temp']:.1f}°C) is above the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
         else:
             st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
-
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
         st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"], species), use_container_width=True)
 
