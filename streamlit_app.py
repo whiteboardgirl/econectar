@@ -190,43 +190,37 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
                               surface_area_exponent: float, lat: float, lon: float,
                               day_of_year: int) -> Dict:
     """
-    Simulates the temperature inside the hive, with enhanced heat retention due to
-    enclosed spaces, multiple lids, and solar exposure.
+    Simulates the temperature inside the hive, with enhanced heat retention and
+    more responsive cooling effects.
     """
     # Adjust ambient temperature for altitude, species behavior, and rain
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
-    temp_adj -= (rain_intensity * 2)  # Reduced rain cooling effect
+    temp_adj -= (rain_intensity * 3)  # Enhanced rain cooling effect
 
-    # Enhanced heat contributions
+    # Heat contributions
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
     solar_heat_gain = calculate_solar_heat_gain(lat, lon, is_daytime, day_of_year)
     
-    # Increased honey heat retention
-    HONEY_HEAT_FACTOR = 0.25  # Increased from 0.15
+    HONEY_HEAT_FACTOR = 0.25
     honey_heat = len(boxes) * HONEY_HEAT_FACTOR * metabolic_heat
     
-    # Add enclosed space heat retention
-    ENCLOSURE_HEAT_FACTOR = 1.5  # Heat multiplication factor for enclosed spaces
-    BASE_HEAT_RETENTION = 2.0    # Base heat retention in enclosed hive
+    ENCLOSURE_HEAT_FACTOR = 1.5
+    BASE_HEAT_RETENTION = 2.0
     
     total_heat = (metabolic_heat + solar_heat_gain + honey_heat) * ENCLOSURE_HEAT_FACTOR + BASE_HEAT_RETENTION
 
-    # Enhanced thermal resistances
+    # Thermal resistances calculation
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
-    propolis_resistance = sum(box.propolis_thickness * 0.02 for box in boxes)  # Increased from 0.015
+    propolis_resistance = sum(box.propolis_thickness * 0.02 for box in boxes)
     
-    # Improved lid insulation effect
-    LID_CONDUCTIVITY = 0.012  # Reduced from 0.015 for better insulation
+    LID_CONDUCTIVITY = 0.012
     lid_resistance = (lid_thickness / 1000) / LID_CONDUCTIVITY
-    
-    # Increased insulation factor for multiple lids
-    LID_INSULATION_FACTOR = 1.5  # Increased from 1.3
-    lid_resistance *= LID_INSULATION_FACTOR * len(boxes)  # Multiple lids compound the effect
+    LID_INSULATION_FACTOR = 1.5
+    lid_resistance *= LID_INSULATION_FACTOR * len(boxes)
 
-    # Enhanced total thermal resistance
     total_resistance = nest_resistance + propolis_resistance + lid_resistance + 0.1
 
-    # Surface area calculations with reduced cooling effect
+    # Surface area and heat calculations
     total_surface_area = sum(
         2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
         for box in boxes
@@ -234,46 +228,57 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
     adjusted_surface = total_surface_area ** surface_area_exponent
     adjusted_surface = max(adjusted_surface, 0.0001)
     
-    # Increased heat retention
-    HEAT_RETENTION_FACTOR = 1.4  # Increased from 1.2
+    HEAT_RETENTION_FACTOR = 1.4
     heat_gain = (total_heat * total_resistance * HEAT_RETENTION_FACTOR) / adjusted_surface
-    
-    # Reduced cooling capacity
-    cooling_factor = min(1.0, colony_size_pct / 80.0)  # Adjusted from 70.0
-    max_cooling = species.max_cooling * cooling_factor
-    cooling = min(max_cooling, heat_gain * 0.6)  # Reduced from 0.8 for less cooling
 
-    # Calculate base hive temperature with enhanced heat retention
+    # Enhanced cooling effect calculation
+    COOLING_POWER = 2.0  # Base cooling power multiplier
+    cooling_factor = min(1.0, colony_size_pct / 80.0)
+    
+    # Calculate total cooling effect from all boxes
+    total_cooling_effect = sum(box.cooling_effect for box in boxes)
+    
+    # Enhanced cooling calculation
+    max_cooling = species.max_cooling * cooling_factor * COOLING_POWER
+    cooling = min(max_cooling, heat_gain * 0.8) * (1 + total_cooling_effect / len(boxes))
+
+    # Temperature calculations with enhanced cooling
     if temp_adj > species.ideal_temp[1]:
-        hive_temp = temp_adj - cooling + BASE_HEAT_RETENTION
+        cooling_effectiveness = cooling * (1 + total_cooling_effect / 5)  # Enhanced cooling when hot
+        hive_temp = temp_adj - cooling_effectiveness + BASE_HEAT_RETENTION
     else:
         temp_difference = species.ideal_temp[1] - temp_adj
         heat_contribution = heat_gain * HEAT_RETENTION_FACTOR
         hive_temp = temp_adj + min(heat_contribution, temp_difference) + BASE_HEAT_RETENTION
 
-    # Calculate box temperatures with enhanced vertical heat gradient
+    # Calculate box temperatures with enhanced cooling effects
     box_temps = []
     for i, box in enumerate(boxes):
-        # Stronger vertical heat gradient
-        height_factor = 1.0 + (i * 0.15)  # Increased from 0.1
+        # Base height factor
+        height_factor = 1.0 + (i * 0.15)
         
-        # Base temperature calculation with enhanced heat retention
+        # Base temperature with height consideration
         box_temp = hive_temp * height_factor
         
-        # Add solar heating effect (stronger for upper boxes)
-        solar_factor = 1.0 + (i * 0.1)
+        # Solar heating (stronger for upper boxes)
         if is_daytime:
+            solar_factor = 1.0 + (i * 0.1)
             box_temp += solar_heat_gain * solar_factor * 0.1
         
-        # Reduced cooling effect
-        box_temp -= (box.cooling_effect * 0.3)  # Reduced from 0.5
+        # Enhanced cooling effect calculation
+        cooling_effect = box.cooling_effect * COOLING_POWER
+        if box_temp > species.ideal_temp[1]:
+            cooling_effect *= 1.5  # Enhanced cooling when too hot
         
-        # Enhanced propolis heating
-        propolis_heating = box.propolis_thickness * 0.06  # Increased from 0.04
+        # Apply cooling effect
+        box_temp -= cooling_effect
+        
+        # Add propolis heating
+        propolis_heating = box.propolis_thickness * 0.06
         box_temp += propolis_heating
         
-        # Allow slightly higher maximum temperatures
-        max_temp = species.ideal_temp[1] + 3  # Increased from +2
+        # Temperature bounds
+        max_temp = species.ideal_temp[1] + 3
         box_temp = max(species.ideal_temp[0], min(max_temp, box_temp))
         box_temps.append(box_temp)
 
