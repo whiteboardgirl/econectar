@@ -86,6 +86,37 @@ SPECIES_CONFIG: Dict[str, BeeSpecies] = {
         nest_conductivity=0.095,
         max_cooling=1.55,
         activity_profile="Diurnal"
+    ),
+    # Additional Colombian species:
+    "Melipona eburnea": BeeSpecies(
+        name="Melipona eburnea",
+        metabolic_rate=0.0090,
+        colony_size_factor=750,
+        ideal_temp=(30.5, 33.5),
+        humidity_range=(50.0, 70.0),
+        nest_conductivity=0.085,
+        max_cooling=1.6,
+        activity_profile="Diurnal"
+    ),
+    "Melipona compressipes": BeeSpecies(
+        name="Melipona compressipes",
+        metabolic_rate=0.0100,
+        colony_size_factor=800,
+        ideal_temp=(31.0, 34.0),
+        humidity_range=(50.0, 68.0),
+        nest_conductivity=0.088,
+        max_cooling=1.7,
+        activity_profile="Diurnal"
+    ),
+    "Trigona spinipes": BeeSpecies(
+        name="Trigona spinipes",
+        metabolic_rate=0.0092,
+        colony_size_factor=850,
+        ideal_temp=(31.0, 35.0),
+        humidity_range=(45.0, 65.0),
+        nest_conductivity=0.095,
+        max_cooling=1.65,
+        activity_profile="Diurnal"
     )
 }
 
@@ -277,10 +308,10 @@ def main():
     species_key = st.sidebar.selectbox("Select Bee Species", list(SPECIES_CONFIG.keys()), key="species_select")
     species = SPECIES_CONFIG[species_key]
 
-    st.sidebar.markdown(f"**{species.name} Characteristics:**")
-    st.sidebar.write(f"Ideal Temperature: {species.ideal_temp[0]}–{species.ideal_temp[1]} °C", key = "ideal_temp_side")
-    st.sidebar.write(f"Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]} %", key = "humidity_side")
-    st.sidebar.write(f"Activity Profile: {species.activity_profile}", key = "activity_side")
+    st.sidebar.markdown(f"**{species.name} Characteristics:**", key="species_header")
+    st.sidebar.write(f"Ideal Temperature: {species.ideal_temp[0]}–{species.ideal_temp[1]} °C", key="ideal_temp_side")
+    st.sidebar.write(f"Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]} %", key="humidity_side")
+    st.sidebar.write(f"Activity Profile: {species.activity_profile}", key="activity_side")
 
     colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50, key="colony_size")
     nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0, key="nest_thickness")
@@ -294,24 +325,24 @@ def main():
     gps = parse_gps_input(gps_input)
 
     if gps is None:
-        st.error("Invalid GPS input. Please enter coordinates as 'lat,lon'.", key = "gps_error")
+        st.error("Invalid GPS input. Please enter coordinates as 'lat,lon'.", key="gps_error")
         return
 
     lat, lon = gps
     altitude = get_altitude(lat, lon)
 
     if altitude is None:
-        st.warning("Could not retrieve altitude. Please enter altitude manually.", key = "altitude_warning")
+        st.warning("Could not retrieve altitude. Please enter altitude manually.", key="altitude_warning")
         altitude = st.slider("Altitude (m)", 0, 5000, 100, key="manual_altitude")
     else:
-        st.write(f"Altitude: {altitude} m", key = "altitude_write")
+        st.write(f"Altitude: {altitude} m", key="altitude_write")
 
     weather = get_weather_data(lat, lon)
     if weather and weather.get("temperature") is not None:
         ambient_temp = weather["temperature"]
-        st.write(f"Current Ambient Temperature: {ambient_temp} °C", key = "ambient_temp_write")
+        st.write(f"Current Ambient Temperature: {ambient_temp} °C", key="ambient_temp_write")
     else:
-        st.warning("Weather data unavailable. Please use the slider below.", key = "weather_warning")
+        st.warning("Weather data unavailable. Please use the slider below.", key="weather_warning")
         ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0, key="manual_temp")
 
     is_daytime = st.toggle("Is it Daytime?", True, key="is_daytime")
@@ -322,7 +353,7 @@ def main():
             ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent
         )
 
-        st.subheader("Simulation Results", key = "sim_results")
+        st.subheader("Simulation Results", key="sim_results")
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C", key="base_temp_metric")
