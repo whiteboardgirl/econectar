@@ -427,8 +427,7 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         from timezonefinder import TimezoneFinder
 
         sun = Sun(lat, lon)
-        today = datetime.datetime.now().date()
-
+        
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
         if timezone_str:
@@ -437,13 +436,20 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
             local_tz = pytz.utc
             st.warning("Could not determine local timezone. Using UTC as default.")
 
+        # Get current time and make it timezone-aware
+        now = datetime.datetime.now(local_tz)
+        today = now.date()
+
         try:
-            # Get sunrise and sunset as datetime objects
+            # Get sunrise and sunset times
             sr = sun.get_local_sunrise_time(today)
             ss = sun.get_local_sunset_time(today)
 
-            # Get current time
-            now = datetime.datetime.now(local_tz)
+            # Make sunrise and sunset timezone-aware if they aren't already
+            if sr.tzinfo is None:
+                sr = local_tz.localize(sr)
+            if ss.tzinfo is None:
+                ss = local_tz.localize(ss)
 
             # Compare with current time
             return sr < now < ss
