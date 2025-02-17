@@ -7,20 +7,16 @@ import requests
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
 
-# ========================
-# Species Configuration
-# ========================
-
 @dataclass
 class MeliponaSpecies:
     name: str
-    metabolic_rate: float # W/bee
-    colony_size_factor: int # Bees per percentage
-    ideal_temp: tuple # (min, max) in °C
-    humidity_range: tuple # optimal RH range
-    nest_conductivity: float # W/m·K
-    max_cooling: float # Max cooling capacity (°C)
-    activity_profile: str # Diurnal pattern
+    metabolic_rate: float
+    colony_size_factor: int
+    ideal_temp: tuple
+    humidity_range: tuple
+    nest_conductivity: float
+    max_cooling: float
+    activity_profile: str
 
 SPECIES_CONFIG = {
     "Small (e.g., Tetragonula)": MeliponaSpecies(
@@ -55,27 +51,15 @@ SPECIES_CONFIG = {
     )
 }
 
-# ========================
-# Core Models
-# ========================
-
 @dataclass
 class Box:
     id: int
-    width: float # cm
-    height: float # cm
+    width: float
+    height: float
     cooling_effect: float
-    propolis_thickness: float = 1.5 # mm
-
-# ========================
-# Thermal Calculations
-# ========================
+    propolis_thickness: float = 1.5
 
 def calculate_box_surface_area(width_cm: float, height_cm: float) -> float:
-    """
-    Calculate the total surface area for a hexagonal box in square meters.
-    Assumes a hexagon-based design where the width defines the distance between parallel sides.
-    """
     width_m, height_m = width_cm / 100, height_cm / 100
     side_length = width_m / math.sqrt(3)
     hexagon_area = (3 * math.sqrt(3) / 2) * (side_length ** 2)
@@ -83,35 +67,25 @@ def calculate_box_surface_area(width_cm: float, height_cm: float) -> float:
     return (2 * hexagon_area) + sides_area
 
 def calculate_metabolic_heat(species: MeliponaSpecies, colony_size_pct: float, altitude: float) -> float:
-    """Calculate colony metabolic heat with altitude compensation."""
     oxygen_factor = max(0.5, math.exp(-altitude/7400))
     colony_size = species.colony_size_factor * colony_size_pct
     return colony_size * species.metabolic_rate * oxygen_factor
 
 def adjust_for_species_activity(temp: float, species: MeliponaSpecies, is_daytime: bool) -> float:
-    """Apply species-specific diurnal adjustments."""
     if species.activity_profile == "Diurnal":
         return temp + (3 if is_daytime else -3)
     elif species.activity_profile == "Morning":
         return temp + (4 if is_daytime else -2)
-    else: # Evening
+    else:
         return temp + (2 if is_daytime else -4)
 
 def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: List[Box], ambient_temp: float,
                                is_daytime: bool, altitude: float) -> dict:
-    """Core thermal model adapted for stingless bees."""
-    # Environmental adjustments
     adj_temp = ambient_temp - (altitude * 6.5 / 1000)
     adj_temp = adjust_for_species_activity(adj_temp, species, is_daytime)
-
-    # Metabolic calculations
     metabolic_heat = calculate_metabolic_heat(species, params['colony_size'], altitude)
-
-    # Nest material properties
     nest_resistance = (params['nest_thickness']/1000)/species.nest_conductivity
-    total_resistance = nest_resistance + 0.04 # Air film resistance
-
-    # Thermal equilibrium calculation
+    total_resistance = nest_resistance + 0.04
     surface_area = sum(calculate_box_surface_area(b.width, b.height) for b in boxes)
     if adj_temp > species.ideal_temp[1]:
         cooling = min(species.max_cooling, (adj_temp - species.ideal_temp[1]) * 0.3)
@@ -119,14 +93,11 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
     else:
         heat_gain = (metabolic_heat * total_resistance) / surface_area
         hive_temp = adj_temp + min(heat_gain, species.ideal_temp[1] - adj_temp)
-
-    # Box temperature adjustments
     box_temps = []
     for box in boxes:
-        propolis_effect = box.propolis_thickness * 0.02 # 0.02°C/mm insulation
+        propolis_effect = box.propolis_thickness * 0.02
         box_temp = hive_temp - box.cooling_effect + propolis_effect
         box_temps.append(max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp)))
-
     return {
         'base_temp': hive_temp,
         'box_temps': box_temps,
@@ -134,81 +105,39 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
         'thermal_resistance': total_resistance
     }
 
-# ========================
-# 3D Visualization Functions
-# ========================
-
-def plot_hive_temperature_surface(boxes, temperatures):
-    fig = plt.figure(figsize=(10, 8))
+def plot_organic_hive_structure(boxes, honey_volumes):
+    fig = plt.figure(figsize=(12, 10))
     ax = fig.add_subplot(111, projection='3d')
-    
-    x = np.array([box.width for box in boxes])
-    y = np.array([box.height for box in boxes])
-    z = np.array(temperatures)
-    
-    # Create a meshgrid
-    X, Y = np.meshgrid(x, y)
-    
-    # Create a 2D Z array (repeat the temperatures for each y value)
-    Z = np.tile(z, (len(y), 1))
-    
-    surf = ax.plot_surface(X, Y, Z, cmap='viridis')
-    
+    for box, honey_volume in zip(boxes, honey_volumes):
+        num_pots = int(honey_volume / 5)
+        x = np.random.uniform(0, box.width, num_pots)
+        y = np.random.uniform(0, box.height, num_pots)
+        z = np.random.uniform(0, box.width, num_pots)
+        sizes = np.random.uniform(10, 30, num_pots)
+        scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=z, cmap='YlOrRd')
     ax.set_xlabel('Width (cm)')
     ax.set_ylabel('Height (cm)')
-    ax.set_zlabel('Temperature (°C)')
-    ax.set_title('Hive Temperature Distribution')
-    
-    fig.colorbar(surf, shrink=0.5, aspect=5)
-    
+    ax.set_zlabel('Depth (cm)')
+    ax.set_title('Stingless Bee Hive - Organic Structure')
+    fig.colorbar(scatter, label='Position in hive (cm)')
     return fig
 
-
-def plot_box_characteristics_3d(boxes, temperatures):
-    fig = plt.figure(figsize=(10, 8))
+def plot_curved_hive_surface(boxes):
+    fig = plt.figure(figsize=(12, 10))
     ax = fig.add_subplot(111, projection='3d')
-    
-    x = [box.width for box in boxes]
-    y = [box.height for box in boxes]
-    z = [box.cooling_effect for box in boxes]
-    
-    scatter = ax.scatter(x, y, z, c=temperatures, cmap='coolwarm', s=100)
-    
+    for box in boxes:
+        x = np.linspace(0, box.width, 50)
+        y = np.linspace(0, box.height, 50)
+        X, Y = np.meshgrid(x, y)
+        Z = 5 * np.sin(X/10) + 5 * np.cos(Y/10)
+        ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.7)
     ax.set_xlabel('Width (cm)')
     ax.set_ylabel('Height (cm)')
-    ax.set_zlabel('Cooling Effect')
-    ax.set_title('Box Characteristics and Temperature')
-    
-    fig.colorbar(scatter, label='Temperature (°C)')
-    
+    ax.set_zlabel('Depth (cm)')
+    ax.set_title('Stingless Bee Hive - Curved Interior Surface')
     return fig
-
-def plot_box_temperatures_3d(boxes, temperatures):
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    x = [box.width for box in boxes]
-    y = [box.height for box in boxes]
-    z = np.zeros_like(x)
-    
-    dx = dy = 1  # Width of each bar
-    dz = temperatures
-    
-    ax.bar3d(x, y, z, dx, dy, dz, shade=True)
-    
-    ax.set_xlabel('Width (cm)')
-    ax.set_ylabel('Height (cm)')
-    ax.set_zlabel('Temperature (°C)')
-    ax.set_title('Box Temperatures')
-    
-    return fig
-
-# ========================
-# UI Components
-# ========================
 
 def render_species_controls():
-    """Species selection and configuration."""
     species_name = st.sidebar.selectbox("Bee Species", list(SPECIES_CONFIG.keys()))
     species = SPECIES_CONFIG[species_name]
     st.sidebar.markdown(f"**{species.name} Characteristics:**")
@@ -222,15 +151,10 @@ def render_species_controls():
     }
     return species, params
 
-# ========================
-# Main Application
-# ========================
-
 def main():
     st.set_page_config(page_title="Meliponini Thermal Sim", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
 
-    # Initialize session state
     if 'boxes' not in st.session_state:
         st.session_state.boxes = [
             Box(1, 18, 8, 1.0),
@@ -244,10 +168,8 @@ def main():
             st.session_state.boxes.append(Box(new_id, 20, 9, 1.5))
         st.session_state.boxes = st.session_state.boxes[:4]
 
-    # Species configuration
     species, params = render_species_controls()
 
-    # Environmental inputs
     col1, col2 = st.columns(2)
     with col1:
         lat, lon = map(float, st.text_input("GPS Coordinates", "-3.4653,-62.2159").split(','))
@@ -256,10 +178,8 @@ def main():
         ambient_temp = get_temperature(lat, lon) or st.slider("Temperature (°C)", 15.0, 40.0, 28.0)
         is_daytime = st.toggle("Daytime", True)
 
-    # Thermal calculations
     results = calculate_hive_temperature(species, params, st.session_state.boxes, ambient_temp, is_daytime, altitude)
 
-    # Results display
     st.subheader("Thermal Profile")
     col1, col2 = st.columns(2)
     with col1:
@@ -271,7 +191,6 @@ def main():
         ax.set_ylim(species.ideal_temp[0]-2, species.ideal_temp[1]+2)
         st.pyplot(fig)
 
-    # Box configuration
     with st.expander("Advanced Hive Configuration"):
         for box in st.session_state.boxes:
             cols = st.columns(4)
@@ -280,23 +199,14 @@ def main():
             with cols[2]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
             with cols[3]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
 
-    # 3D Visualizations
-    st.subheader("3D Visualizations")
-    col1, col2 = st.columns(2)
+    st.subheader("Organic Hive Structure")
+    fig_organic = plot_organic_hive_structure(st.session_state.boxes, results['box_temps'])
+    st.pyplot(fig_organic)
 
-    with col1:
-        fig_surface = plot_hive_temperature_surface(st.session_state.boxes, results['box_temps'])
-        st.pyplot(fig_surface)
+    st.subheader("Curved Interior Surface")
+    fig_curved = plot_curved_hive_surface(st.session_state.boxes)
+    st.pyplot(fig_curved)
 
-    with col2:
-        fig_scatter = plot_box_characteristics_3d(st.session_state.boxes, results['box_temps'])
-        st.pyplot(fig_scatter)
-
-    st.subheader("Box Temperature Comparison")
-    fig_bar = plot_box_temperatures_3d(st.session_state.boxes, results['box_temps'])
-    st.pyplot(fig_bar)
-
-# Helper functions for API calls
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
     try:
