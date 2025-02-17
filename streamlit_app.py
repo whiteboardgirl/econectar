@@ -374,29 +374,37 @@ def create_hive_boxes(species):
 @st.cache_data(show_spinner=False)
 def is_daytime_calc(lat: float, lon: float) -> bool:
     """
-    Determines if it's daytime based on GPS coordinates.
-    This version uses the sunrise and sunset times (converted to local time)
-    for a more accurate check.
+    Determine if it's daytime based on GPS coordinates.
+    Uses the `suntime` library and local timezone for calculations.
     """
     try:
         from suntime import Sun
         from timezonefinder import TimezoneFinder
-        sun = Sun(lat, lon)
+        
+        # Get timezone for location
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
         local_tz = pytz.timezone(timezone_str) if timezone_str else pytz.utc
         if not timezone_str:
             st.warning("Could not determine local timezone. Using UTC as default.")
 
+        # Create timezone-aware current time
         now = datetime.datetime.now(local_tz)
-        today = now.date()
-        # Get sunrise and sunset times and localize if needed
-        sr = sun.get_sunrise_time(today)
-        ss = sun.get_sunset_time(today)
+        
+        # Initialize Sun calculator
+        sun = Sun(lat, lon)
+        
+        # Get sunrise and sunset times using datetime object
+        today_datetime = datetime.datetime.combine(now.date(), datetime.time.min)
+        sr = sun.get_sunrise_time(today_datetime)
+        ss = sun.get_sunset_time(today_datetime)
+        
+        # Ensure times are timezone-aware
         if sr.tzinfo is None:
             sr = local_tz.localize(sr)
         if ss.tzinfo is None:
             ss = local_tz.localize(ss)
+            
         return sr <= now <= ss
     except Exception as e:
         st.error(f"Error in is_daytime_calc: {e}")
