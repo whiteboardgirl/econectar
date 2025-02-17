@@ -232,15 +232,15 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
     heat_gain = (total_heat * total_resistance * HEAT_RETENTION_FACTOR) / adjusted_surface
 
     # Enhanced cooling effect calculation
-    COOLING_POWER = 2.0  # Base cooling power multiplier
+    COOLING_POWER = 8.0  # Maximum cooling of 8°C
     cooling_factor = min(1.0, colony_size_pct / 80.0)
     
     # Calculate total cooling effect from all boxes
     total_cooling_effect = sum(box.cooling_effect for box in boxes)
     
     # Enhanced cooling calculation
-    max_cooling = species.max_cooling * cooling_factor * COOLING_POWER
-    cooling = min(max_cooling, heat_gain * 0.8) * (1 + total_cooling_effect / len(boxes))
+    max_cooling = COOLING_POWER * cooling_factor
+    cooling = max_cooling * (total_cooling_effect / (len(boxes) * 5.0))  # Normalize cooling effect
 
     # Temperature calculations with enhanced cooling
     if temp_adj > species.ideal_temp[1]:
@@ -265,13 +265,13 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
             solar_factor = 1.0 + (i * 0.1)
             box_temp += solar_heat_gain * solar_factor * 0.1
         
-        # Enhanced cooling effect calculation
-        cooling_effect = box.cooling_effect * COOLING_POWER
+        # Enhanced cooling effect calculation - up to 8°C per box
+        individual_cooling = box.cooling_effect * COOLING_POWER
         if box_temp > species.ideal_temp[1]:
-            cooling_effect *= 1.5  # Enhanced cooling when too hot
+            individual_cooling *= 1.5  # Enhanced cooling when too hot
         
         # Apply cooling effect
-        box_temp -= cooling_effect
+        box_temp -= individual_cooling
         
         # Add propolis heating
         propolis_heating = box.propolis_thickness * 0.06
