@@ -142,13 +142,17 @@ def plot_hive_temperature_surface(boxes, temperatures):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     
-    x = [box.width for box in boxes]
-    y = [box.height for box in boxes]
-    z = temperatures
+    x = np.array([box.width for box in boxes])
+    y = np.array([box.height for box in boxes])
+    z = np.array(temperatures)
     
-    x, y = np.meshgrid(x, y)
+    # Create a meshgrid
+    X, Y = np.meshgrid(x, y)
     
-    surf = ax.plot_surface(x, y, z, cmap='viridis')
+    # Create a 2D Z array (repeat the temperatures for each y value)
+    Z = np.tile(z, (len(y), 1))
+    
+    surf = ax.plot_surface(X, Y, Z, cmap='viridis')
     
     ax.set_xlabel('Width (cm)')
     ax.set_ylabel('Height (cm)')
@@ -158,6 +162,7 @@ def plot_hive_temperature_surface(boxes, temperatures):
     fig.colorbar(surf, shrink=0.5, aspect=5)
     
     return fig
+
 
 def plot_box_characteristics_3d(boxes, temperatures):
     fig = plt.figure(figsize=(10, 8))
