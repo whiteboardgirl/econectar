@@ -142,36 +142,42 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
                               boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
                               altitude: float, rain_intensity: float) -> Dict:
-    """
-    Simulate the hive's thermal behavior.
-    
-    Parameters:
-      - rain_intensity (0 to 1): a higher value implies additional cooling.
-    
-    Returns a dictionary containing:
-      - base_temp: Calculated core hive temperature.
-      - box_temps: List of temperatures per hive box.
-      - metabolic_heat: Calculated metabolic heat output.
-      - thermal_resistance: Combined thermal resistance.
-      - heat_gain: Calculated heat gain.
-    """
-    # Adjust ambient temperature for altitude and species activity
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
-    # Apply rain cooling effect: each 0.1 of rain intensity subtracts ~0.5°C.
     temp_adj -= (rain_intensity * 5)
-
+    
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
-    # Compute nest resistance (thickness in meters / conductivity) and add a constant resistance
+    
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
     total_resistance = nest_resistance + 0.04
-
-    # Sum surface area from all boxes (convert cm^2 to m^2)
+    
     total_surface_area = sum(
         2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
         for box in boxes
     )
-    heat_gain = (metabolic_heat * total_resistance) / total_surface_area
+    
+    heat_gain = metabolic_heat / total_surface_area
     cooling = min(species.max_cooling, heat_gain)
+    
+    # Calculate base hive temperature
+    if temp_adj > species.ideal_temp[1]:
+        hive_temp = max(species.ideal_temp[0], temp_adj - cooling)
+    else:
+        hive_temp = min(species.ideal_temp[1], temp_adj + heat_gain)
+    
+    # Calculate temperatures for each box
+    box_temps = []
+    for box in boxes:
+        box_temp = hive_temp - box.cooling_effect + (box.propolis_thickness * 0.02)
+        box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
+        box_temps.append(box_temp)
+    
+    return {
+        "base_temp": hive_temp,
+        "box_temps": box_temps,
+        "metabolic_heat": metabolic_heat,
+        "thermal_resistance": total_resistance,
+        "heat_gain": heat_gain
+    }
 
     # Determine core hive temperature based on whether ambient is above ideal max
     if temp_adj > species.ideal_temp[1]:
