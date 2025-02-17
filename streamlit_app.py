@@ -231,12 +231,30 @@ def get_temperature(lat: float, lon: float) -> float:
         return None
 
 @st.cache_data
-def get_altitude(lat: float, lon: float) -> float:
+def get_weather_data(lat: float, lon: float) -> Dict[str, Any]:
     try:
-        response = requests.get(f"https://api.open-elevation.com/api/v1/lookup?locations={lat},{lon}")
-        return response.json()['results'][0]['elevation']
-    except:
+        api_key = "YOUR_API_KEY_HERE"  # Replace with your actual API key
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        return {
+            'temperature': data['main']['temp'],
+            'humidity': data['main']['humidity'],
+            'pressure': data['main']['pressure'],
+            'wind_speed': data['wind']['speed'] if 'wind' in data else 0,
+            'cloudiness': data['clouds']['all'] if 'clouds' in data else 0
+        }
+    except requests.RequestException:
         return None
+
+# Then use this in main():
+weather_data = get_weather_data(lat, lon)
+if weather_data:
+    ambient_temp = weather_data['temperature']
+    # You can now adjust other parameters based on this data
+else:
+    ambient_temp = st.slider("Temperature (°C)", 15.0, 40.0, 28.0)  # Fallback to manual input
 
 if __name__ == "__main__":
     main()
