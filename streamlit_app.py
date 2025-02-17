@@ -319,10 +319,16 @@ def create_hive_boxes(species):
     return boxes
 
 def is_daytime_calc(lat: float, lon: float) -> bool:
+    """
+    Determine if it's daytime based on GPS coordinates.
+    Uses the `suntime` library.
+
+    """
     try:
         from suntime import Sun, SunTimeException
         sun = Sun(lat, lon)
-        today = datetime.date.today()
+        # Use a timezone-aware datetime object for today
+        today = datetime.datetime.now(pytz.utc).date()
         try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
