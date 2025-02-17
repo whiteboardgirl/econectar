@@ -72,16 +72,6 @@ SPECIES_CONFIG: Dict[str, BeeSpecies] = {
         max_cooling=1.7,
         activity_profile="Morning"
     ),
-    "Trigona fulviventris": BeeSpecies(
-        name="Trigona fulviventris",
-        metabolic_rate=0.0095,
-        colony_size_factor=800,
-        ideal_temp=(32.0, 36.0),
-        humidity_range=(45.0, 65.0),
-        nest_conductivity=0.10,
-        max_cooling=1.6,
-        activity_profile="Diurnal"
-    ),
     "Cephalotrigona femorata": BeeSpecies(
         name="Cephalotrigona femorata",
         metabolic_rate=0.0110,
@@ -112,16 +102,6 @@ SPECIES_CONFIG: Dict[str, BeeSpecies] = {
         max_cooling=1.7,
         activity_profile="Diurnal"
     ),
-    "Trigona spinipes": BeeSpecies(
-        name="Trigona spinipes",
-        metabolic_rate=0.0092,
-        colony_size_factor=850,
-        ideal_temp=(31.0, 35.0),
-        humidity_range=(45.0, 65.0),
-        nest_conductivity=0.095,
-        max_cooling=1.65,
-        activity_profile="Diurnal"
-    )
 }
 
 # Utility functions
