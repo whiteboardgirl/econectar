@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import requests
 from dataclasses import dataclass
 from typing import List, Tuple, Dict
+import math
 
 @dataclass
 class BeeSpecies:
@@ -106,49 +107,48 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
 def calculate_solar_heat(time_of_day: int, species: BeeSpecies) -> float:
     normalized_time = abs((time_of_day - 12) / 12)
     solar_factor = 1 - (normalized_time ** 2)
-    
+
     if species.activity_profile == "Diurnal":
         activity_boost = 1.2 if 6 <= time_of_day < 18 else 0.8
     elif species.activity_profile == "Morning":
         activity_boost = 1.3 if 6 <= time_of_day < 12 else 0.7
     else:
         activity_boost = 1.3 if 12 <= time_of_day < 18 else 0.7
-    
+
     return 5 * solar_factor * activity_boost
 
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
                               boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
-                              altitude: float, rain_intensity: float, surface_area_exponent: float,
-                              time_of_day: int) -> Dict:
+                              altitude: float, rain_intensity: float, surface_area_exponent: float, time_of_day: int) -> Dict:
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
     temp_adj -= (rain_intensity * 3)
-    
+
     solar_heat = calculate_solar_heat(time_of_day, species)
     temp_adj += solar_heat
-    
+
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
-    
+
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
     propolis_resistance = sum(box.propolis_thickness * 0.015 for box in boxes)
     total_resistance = nest_resistance + propolis_resistance + 0.08
-    
+
     total_surface_area = sum(
         2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
         for box in boxes
     )
-    
+
     adjusted_surface = total_surface_area ** surface_area_exponent
     heat_gain = (metabolic_heat * total_resistance) / adjusted_surface
     heat_gain *= 1.5
-    
+
     cooling = min(species.max_cooling * 0.7, heat_gain)
-    
+
     if temp_adj > species.ideal_temp[1]:
         hive_temp = temp_adj - cooling
     else:
         temp_difference = species.ideal_temp[1] - temp_adj
         hive_temp = temp_adj + min(heat_gain, temp_difference)
-    
+
     box_temps = []
     for box in boxes:
         box_temp = hive_temp - (box.cooling_effect * 0.7)
@@ -156,7 +156,7 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
         box_temp += propolis_heating
         box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
         box_temps.append(box_temp)
-    
+
     return {
         "base_temp": hive_temp,
         "box_temps": box_temps,
@@ -194,7 +194,7 @@ def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float]) -> go.F
         y.extend(ys)
         z.extend(zs)
         temp_values.extend([temp] * num_points)
-    
+
     fig = go.Figure(data=[go.Scatter3d(
         x=x, y=y, z=z,
         mode='markers',
@@ -231,7 +231,7 @@ def create_hive_boxes(species):
             HiveBox(4, 13, 5, 13, 1.5),
             HiveBox(5, 13, 5, 13, 1.0)
         ]
-    
+
     boxes = []
     for box in default_boxes:
         cols = st.columns(4)
@@ -248,41 +248,41 @@ def create_hive_boxes(species):
 
 def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
-    
+
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
-    
+
     species_key = st.sidebar.selectbox("Select Bee Species", list(SPECIES_CONFIG.keys()), key="species_select")
     species = SPECIES_CONFIG[species_key]
-    
+
     st.sidebar.markdown(f"**{species.name} Characteristics:**")
     st.sidebar.write(f"Ideal Temperature: {species.ideal_temp[0]}–{species.ideal_temp[1]} °C")
     st.sidebar.write(f"Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]} %")
     st.sidebar.write(f"Activity Profile: {species.activity_profile}")
-    
+
     colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50, key="colony_size")
     nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0, key="nest_thickness")
     rain_intensity = st.sidebar.slider("Rain Intensity (0 to 1)", 0.0, 1.0, 0.0, step=0.1, key="rain_intensity")
     surface_area_exponent = st.sidebar.slider("Surface Area Exponent", 1.0, 2.0, 1.0, step=0.1, key="surface_area_exponent")
-    
-    with st.expander("Advanced Hive Configuration"):
+
+    with st.expander("Advanced Hive Configuration", key="hive_config_expander"):
         boxes = create_hive_boxes(species)
-    
+
     gps_input = st.text_input("Enter GPS Coordinates (lat,lon)", "-3.4653,-62.2159", key="gps_input")
     gps = parse_gps_input(gps_input)
-    
+
     if gps is None:
         st.error("Invalid GPS input. Please enter coordinates as 'lat,lon'.")
         return
-    
+
     lat, lon = gps
     altitude = get_altitude(lat, lon)
-    
+
     if altitude is None:
         st.warning("Could not retrieve altitude. Please enter altitude manually.")
         altitude = st.slider("Altitude (m)", 0, 5000, 100, key="manual_altitude")
     else:
         st.write(f"Altitude: {altitude} m")
-    
+
     weather = get_weather_data(lat, lon)
     if weather and weather.get("temperature") is not None:
         ambient_temp = weather["temperature"]
@@ -290,22 +290,22 @@ def main():
     else:
         st.warning("Weather data unavailable. Please use the slider below.")
         ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0, key="manual_temp")
-    
+
     time_of_day = st.slider("Time of Day (24-hour format)", 0, 23, 12, key="time_of_day")
-    is_daytime = 6 <= time_of_day < 18
-    
+    is_daytime = 6 <= time_of_day < 18  # Daytime is between 6 AM and 6 PM
+
     if st.button("Run Simulation", key="run_simulation"):
         results = simulate_hive_temperature(
             species, colony_size_pct, nest_thickness, boxes,
-            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent, time_of_day
+            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent, time_of_day  # Pass time_of_day
         )
-        
+
         st.subheader("Simulation Results")
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C")
             st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W")
-with col2:
+        with col2:
             st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}")
             st.write("Heat Gain:", f"{results['heat_gain']:.3f}")
 
