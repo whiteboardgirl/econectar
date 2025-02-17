@@ -54,10 +54,11 @@ SPECIES_CONFIG = {
 @dataclass
 class Box:
     id: int
-    width: float # cm
-    height: float # cm
+    width: float  # cm
+    height: float  # cm
+    depth: float  # cm
     cooling_effect: float
-    propolis_thickness: float = 1.5 # mm
+    propolis_thickness: float = 1.5  # mm
 
 def calculate_box_surface_area(width_cm: float, height_cm: float) -> float:
     width_m, height_m = width_cm / 100, height_cm / 100
@@ -166,6 +167,23 @@ def main():
     st.set_page_config(page_title="Meliponini Thermal Sim", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
 
+# Initialize session state with correct box sizes
+    if 'boxes' not in st.session_state:
+        if species.name == "Melipona":  # INPA type
+            st.session_state.boxes = [
+                Box(1, 23, 6, 23, 1.0),
+                Box(2, 23, 6, 23, 0.5),
+                Box(3, 23, 6, 23, 2.0),
+                Box(4, 23, 6, 23, 1.5)
+            ]
+        else:  # AF type for smaller bees
+            st.session_state.boxes = [
+                Box(1, 13, 5, 13, 1.0),
+                Box(2, 13, 5, 13, 0.5),
+                Box(3, 13, 5, 13, 2.0),
+                Box(4, 13, 5, 13, 1.5),
+                Box(5, 13, 5, 13, 1.0)
+            ]
 
     if 'boxes' not in st.session_state:
         st.session_state.boxes = [
