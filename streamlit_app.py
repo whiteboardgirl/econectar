@@ -10,13 +10,13 @@ from typing import Dict, List, Any, Optional
 @dataclass
 class MeliponaSpecies:
     name: str
-    metabolic_rate: float # W/bee
-    colony_size_factor: int # Bees per percentage
-    ideal_temp: tuple # (min, max) in °C
-    humidity_range: tuple # optimal RH range
-    nest_conductivity: float # W/m·K
-    max_cooling: float # Max cooling capacity (°C)
-    activity_profile: str # Diurnal pattern
+    metabolic_rate: float
+    colony_size_factor: int
+    ideal_temp: tuple
+    humidity_range: tuple
+    nest_conductivity: float
+    max_cooling: float
+    activity_profile: str
 
 SPECIES_CONFIG = {
     "Small (e.g., Tetragonula)": MeliponaSpecies(
@@ -54,18 +54,15 @@ SPECIES_CONFIG = {
 @dataclass
 class Box:
     id: int
-    width: float  # cm
-    height: float  # cm
-    depth: float  # cm
+    width: float
+    height: float
+    depth: float
     cooling_effect: float
-    propolis_thickness: float = 1.5  # mm
+    propolis_thickness: float = 1.5
 
-def calculate_box_surface_area(width_cm: float, height_cm: float) -> float:
-    width_m, height_m = width_cm / 100, height_cm / 100
-    side_length = width_m / math.sqrt(3)
-    hexagon_area = (3 * math.sqrt(3) / 2) * (side_length ** 2)
-    sides_area = 6 * side_length * height_m
-    return (2 * hexagon_area) + sides_area
+def calculate_box_surface_area(width_cm: float, height_cm: float, depth_cm: float) -> float:
+    width_m, height_m, depth_m = width_cm / 100, height_cm / 100, depth_cm / 100
+    return 2 * (width_m * depth_m + width_m * height_m + depth_m * height_m)
 
 def calculate_metabolic_heat(species: MeliponaSpecies, colony_size_pct: float, altitude: float) -> float:
     oxygen_factor = max(0.5, math.exp(-altitude/7400))
@@ -77,7 +74,7 @@ def adjust_for_species_activity(temp: float, species: MeliponaSpecies, is_daytim
         return temp + (3 if is_daytime else -3)
     elif species.activity_profile == "Morning":
         return temp + (4 if is_daytime else -2)
-    else: # Evening
+    else:
         return temp + (2 if is_daytime else -4)
 
 def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: List[Box], ambient_temp: float,
@@ -86,8 +83,8 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
     adj_temp = adjust_for_species_activity(adj_temp, species, is_daytime)
     metabolic_heat = calculate_metabolic_heat(species, params['colony_size'], altitude)
     nest_resistance = (params['nest_thickness']/1000)/species.nest_conductivity
-    total_resistance = nest_resistance + 0.04 # Air film resistance
-    surface_area = sum(calculate_box_surface_area(b.width, b.height) for b in boxes)
+    total_resistance = nest_resistance + 0.04
+    surface_area = sum(calculate_box_surface_area(b.width, b.height, b.depth) for b in boxes)
     if adj_temp > species.ideal_temp[1]:
         cooling = min(species.max_cooling, (adj_temp - species.ideal_temp[1]) * 0.3)
         hive_temp = adj_temp - cooling
@@ -96,7 +93,7 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
         hive_temp = adj_temp + min(heat_gain, species.ideal_temp[1] - adj_temp)
     box_temps = []
     for box in boxes:
-        propolis_effect = box.propolis_thickness * 0.02 # 0.02°C/mm insulation
+        propolis_effect = box.propolis_thickness * 0.02
         box_temp = hive_temp - box.cooling_effect + propolis_effect
         box_temps.append(max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp)))
     return {
@@ -105,6 +102,48 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
         'metabolic_heat': metabolic_heat,
         'thermal_resistance': total_resistance
     }
+
+def plot_organic_hive_structure(boxes, temperatures):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for box, temp in zip(boxes, temperatures):
+        num_pots = int(temp * 5)  # Arbitrary scaling for visualization
+        x = np.random.uniform(0, box.width, num_pots)
+        y = np.random.uniform(0, box.depth, num_pots)
+        z = np.random.uniform(0, box.height, num_pots)
+        sizes = np.random.uniform(10, 30, num_pots)
+        
+        scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=temp, cmap='YlOrRd')
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Depth (cm)')
+    ax.set_zlabel('Height (cm)')
+    ax.set_title('Stingless Bee Hive - Organic Structure')
+    
+    fig.colorbar(scatter, label='Temperature (°C)')
+    
+    return fig
+
+def plot_curved_hive_surface(boxes):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for box in boxes:
+        x = np.linspace(0, box.width, 50)
+        y = np.linspace(0, box.depth, 50)
+        X, Y = np.meshgrid(x, y)
+        
+        Z = 5 * np.sin(X/10) + 5 * np.cos(Y/10)
+        
+        ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.7)
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Depth (cm)')
+    ax.set_zlabel('Height (cm)')
+    ax.set_title('Stingless Bee Hive - Curved Interior Surface')
+    
+    return fig
 
 def render_species_controls():
     species_name = st.sidebar.selectbox("Bee Species", list(SPECIES_CONFIG.keys()))
@@ -120,54 +159,12 @@ def render_species_controls():
     }
     return species, params
 
-def plot_organic_hive_structure(boxes, honey_volumes):
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    for box, honey_volume in zip(boxes, honey_volumes):
-        num_pots = int(honey_volume / 5)  # Assume each pot holds about 5 ml
-        x = np.random.uniform(0, box.width, num_pots)
-        y = np.random.uniform(0, box.height, num_pots)
-        z = np.random.uniform(0, box.width, num_pots)  # Assuming depth is similar to width
-        sizes = np.random.uniform(10, 30, num_pots)  # Vary pot sizes
-        
-        scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=z, cmap='YlOrRd')
-    
-    ax.set_xlabel('Width (cm)')
-    ax.set_ylabel('Height (cm)')
-    ax.set_zlabel('Depth (cm)')
-    ax.set_title('Stingless Bee Hive - Organic Structure')
-    
-    fig.colorbar(scatter, label='Position in hive (cm)')
-    
-    return fig
-
-def plot_curved_hive_surface(boxes):
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    for box in boxes:
-        x = np.linspace(0, box.width, 50)
-        y = np.linspace(0, box.height, 50)
-        X, Y = np.meshgrid(x, y)
-        
-        # Generate a curved surface
-        Z = 5 * np.sin(X/10) + 5 * np.cos(Y/10)
-        
-        ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.7)
-    
-    ax.set_xlabel('Width (cm)')
-    ax.set_ylabel('Height (cm)')
-    ax.set_zlabel('Depth (cm)')
-    ax.set_title('Stingless Bee Hive - Curved Interior Surface')
-    
-    return fig
-
 def main():
     st.set_page_config(page_title="Meliponini Thermal Sim", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
 
-# Initialize session state with correct box sizes
+    species, params = render_species_controls()
+
     if 'boxes' not in st.session_state:
         if species.name == "Melipona":  # INPA type
             st.session_state.boxes = [
@@ -184,21 +181,6 @@ def main():
                 Box(4, 13, 5, 13, 1.5),
                 Box(5, 13, 5, 13, 1.0)
             ]
-
-    if 'boxes' not in st.session_state:
-        st.session_state.boxes = [
-            Box(1, 18, 8, 1.0),
-            Box(2, 18, 8, 0.5),
-            Box(3, 22, 10, 2.0),
-            Box(4, 20, 9, 1.5)
-        ]
-    elif len(st.session_state.boxes) != 4:
-        while len(st.session_state.boxes) < 4:
-            new_id = len(st.session_state.boxes) + 1
-            st.session_state.boxes.append(Box(new_id, 20, 9, 1.5))
-        st.session_state.boxes = st.session_state.boxes[:4]
-
-    species, params = render_species_controls()
 
     col1, col2 = st.columns(2)
     with col1:
@@ -223,19 +205,19 @@ def main():
 
     with st.expander("Advanced Hive Configuration"):
         for box in st.session_state.boxes:
-            cols = st.columns(4)
+            cols = st.columns(5)
             with cols[0]: box.width = st.number_input(f"Width Box {box.id}", 10, 30, int(box.width))
             with cols[1]: box.height = st.number_input(f"Height Box {box.id}", 5, 20, int(box.height))
-            with cols[2]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
-            with cols[3]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
+            with cols[2]: box.depth = st.number_input(f"Depth Box {box.id}", 10, 30, int(box.depth))
+            with cols[3]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
+            with cols[4]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
 
-    st.subheader("Organic Hive Structure")
-    fig_organic = plot_organic_hive_structure(st.session_state.boxes, results['box_temps'])
-    st.pyplot(fig_organic)
-
-    st.subheader("Curved Interior Surface")
-    fig_curved = plot_curved_hive_surface(st.session_state.boxes)
-    st.pyplot(fig_curved)
+    st.subheader("3D Visualizations")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.pyplot(plot_organic_hive_structure(st.session_state.boxes, results['box_temps']))
+    with col2:
+        st.pyplot(plot_curved_hive_surface(st.session_state.boxes))
 
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
