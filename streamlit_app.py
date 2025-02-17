@@ -67,11 +67,6 @@ class Box:
 # ========================
 # Thermal Calculations
 # ========================
-def calculate_metabolic_heat(species: MeliponaSpecies, colony_size_pct: float, altitude: float) -> float:
-    """Calculate colony metabolic heat with altitude compensation."""
-    oxygen_factor = max(0.5, math.exp(-altitude/7400))
-    colony_size = species.colony_size_factor * colony_size_pct
-    return colony_size * species.metabolic_rate * oxygen_factor
 
 def calculate_box_surface_area(width_cm: float, height_cm: float) -> float:
     """
@@ -84,6 +79,12 @@ def calculate_box_surface_area(width_cm: float, height_cm: float) -> float:
     sides_area = 6 * side_length * height_m
     return (2 * hexagon_area) + sides_area
 
+def calculate_metabolic_heat(species: MeliponaSpecies, colony_size_pct: float, altitude: float) -> float:
+    """Calculate colony metabolic heat with altitude compensation."""
+    oxygen_factor = max(0.5, math.exp(-altitude/7400))
+    colony_size = species.colony_size_factor * colony_size_pct
+    return colony_size * species.metabolic_rate * oxygen_factor
+
 def adjust_for_species_activity(temp: float, species: MeliponaSpecies, is_daytime: bool) -> float:
     """Apply species-specific diurnal adjustments."""
     if species.activity_profile == "Diurnal":
@@ -93,20 +94,17 @@ def adjust_for_species_activity(temp: float, species: MeliponaSpecies, is_daytim
     else:  # Evening
         return temp + (2 if is_daytime else -4)
 
-def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: List[Box], ambient_temp: float, 
+def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: List[Box], ambient_temp: float,
                               is_daytime: bool, altitude: float) -> dict:
     """Core thermal model adapted for stingless bees."""
     # Environmental adjustments
     adj_temp = ambient_temp - (altitude * 6.5 / 1000)
     adj_temp = adjust_for_species_activity(adj_temp, species, is_daytime)
-    
     # Metabolic calculations
     metabolic_heat = calculate_metabolic_heat(species, params['colony_size'], altitude)
-    
     # Nest material properties
     nest_resistance = (params['nest_thickness']/1000)/species.nest_conductivity
     total_resistance = nest_resistance + 0.04  # Air film resistance
-    
     # Thermal equilibrium calculation
     surface_area = sum(calculate_box_surface_area(b.width, b.height) for b in boxes)
     if adj_temp > species.ideal_temp[1]:
@@ -115,14 +113,14 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
     else:
         heat_gain = (metabolic_heat * total_resistance) / surface_area
         hive_temp = adj_temp + min(heat_gain, species.ideal_temp[1] - adj_temp)
-    
+
     # Box temperature adjustments
     box_temps = []
     for box in boxes:
         propolis_effect = box.propolis_thickness * 0.02  # 0.02°C/mm insulation
         box_temp = hive_temp - box.cooling_effect + propolis_effect
         box_temps.append(max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp)))
-    
+
     return {
         'base_temp': hive_temp,
         'box_temps': box_temps,
@@ -137,12 +135,12 @@ def render_species_controls():
     """Species selection and configuration."""
     species_name = st.sidebar.selectbox("Bee Species", list(SPECIES_CONFIG.keys()))
     species = SPECIES_CONFIG[species_name]
-    
+
     st.sidebar.markdown(f"**{species.name} Characteristics:**")
     st.sidebar.write(f"- Ideal Temp: {species.ideal_temp[0]}–{species.ideal_temp[1]}°C")
     st.sidebar.write(f"- Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]}% RH")
     st.sidebar.write(f"- Activity Pattern: {species.activity_profile}")
-    
+
     params = {
         'colony_size': st.sidebar.slider("Colony Size (%)", 0, 100, 50),
         'nest_thickness': st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0),
@@ -156,18 +154,24 @@ def render_species_controls():
 def main():
     st.set_page_config(page_title="Meliponini Thermal Sim", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
-    
+
     # Initialize session state
     if 'boxes' not in st.session_state:
         st.session_state.boxes = [
             Box(1, 18, 8, 1.0),
             Box(2, 18, 8, 0.5),
-            Box(3, 22, 10, 2.0)
+            Box(3, 22, 10, 2.0),
+            Box(4, 20, 9, 1.5)  # Add a fourth box with example values
         ]
-    
+    elif len(st.session_state.boxes) != 4:  # If already initialized but not 4 boxes
+        while len(st.session_state.boxes) < 4:
+            new_id = len(st.session_state.boxes) + 1
+            st.session_state.boxes.append(Box(new_id, 20, 9, 1.5))  # Add a new box
+        st.session_state.boxes = st.session_state.boxes[:4]  # Ensure no more than 4
+
     # Species configuration
     species, params = render_species_controls()
-    
+
     # Environmental inputs
     col1, col2 = st.columns(2)
     with col1:
@@ -176,10 +180,10 @@ def main():
     with col2:
         ambient_temp = get_temperature(lat, lon) or st.slider("Temperature (°C)", 15.0, 40.0, 28.0)
         is_daytime = st.toggle("Daytime", True)
-    
+
     # Thermal calculations
     results = calculate_hive_temperature(species, params, st.session_state.boxes, ambient_temp, is_daytime, altitude)
-    
+
     # Results display
     st.subheader("Thermal Profile")
     col1, col2 = st.columns(2)
@@ -191,7 +195,7 @@ def main():
         ax.bar([f"Box {i+1}" for i in range(len(results['box_temps']))], results['box_temps'])
         ax.set_ylim(species.ideal_temp[0]-2, species.ideal_temp[1]+2)
         st.pyplot(fig)
-    
+
     # Box configuration
     with st.expander("Advanced Hive Configuration"):
         for box in st.session_state.boxes:
