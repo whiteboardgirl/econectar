@@ -324,16 +324,17 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
     """
     try:
         from suntime import Sun, SunTimeException
-
         sun = Sun(lat, lon)
         today = datetime.date.today()
-        timezone = pytz.utc  # or a specific timezone if known
+        timezone = pytz.utc
+
         try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
             now = datetime.datetime.now(timezone)
 
-            return sr.replace(tzinfo=timezone) < now.replace(tzinfo=timezone) < ss.replace(tzinfo=timezone)
+            return (timezone.localize(sr) < now and now < timezone.localize(ss))
+
         except SunTimeException:
             return True
     except ImportError:
