@@ -5,7 +5,7 @@ import requests
 from dataclasses import dataclass
 from typing import List, Tuple, Dict
 import datetime
-import pytz  # For timezone awareness
+import pytz
 
 @dataclass
 class BeeSpecies:
@@ -130,9 +130,6 @@ def parse_gps_input(gps_str: str) -> Tuple[float, float] | None:
 
 @st.cache_data(show_spinner=False)
 def get_weather_data(lat: float, lon: float, is_daytime: bool) -> Dict | None:
-    """
-    Fetches weather data from Open-Meteo API, adjusting temperature based on daytime.
-    """
     url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}¤t_weather=true"
     try:
         response = requests.get(url, timeout=5)
@@ -141,15 +138,12 @@ def get_weather_data(lat: float, lon: float, is_daytime: bool) -> Dict | None:
         current = data.get("current_weather")
         if current:
             temperature = current.get("temperature")
-            # Simulate day/night temperature difference (example)
-            temperature += 5 if is_daytime else -2  # Add 5°C during day, subtract 2°C at night
             return {
                 "temperature": temperature,
                 "windspeed": current.get("windspeed")
             }
     except requests.RequestException:
-        pass
-    return None
+        return None
 
 @st.cache_data(show_spinner=False)
 def get_altitude(lat: float, lon: float) -> float | None:
@@ -162,8 +156,7 @@ def get_altitude(lat: float, lon: float) -> float | None:
         if results and isinstance(results, list):
             return results[0].get("elevation")
     except requests.RequestException:
-        pass
-    return None
+        return None
 
 def calculate_metabolic_heat(species: BeeSpecies, colony_size_pct: float, altitude: float) -> float:
     oxygen_factor = max(0.5, np.exp(-altitude / 7400))
@@ -183,29 +176,13 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
     return temp_adj
 
 def calculate_solar_heat_gain(lat: float, lon: float, is_daytime: bool, day_of_year: int) -> float:
-    """
-    Estimates solar heat gain in Watts based on location, time of day, and day of year.
-    This is a simplified model.  More sophisticated models would consider cloud cover,
-    surface orientation, and other factors.
-
-    """
     if not is_daytime:
-        return 0.0  # No solar gain at night
+        return 0.0
 
-    # Solar constant (approximate)
-    solar_constant = 1367  # W/m^2
-
-    # Simplified solar angle calculation (more accurate models exist)
-    # This assumes the hive is optimally angled towards the sun.
+    solar_constant = 1367
     solar_angle = np.cos(np.radians(23.45 * np.sin(np.radians(360 * (day_of_year + 284) / 365))))
-
-    # Estimated solar radiation on the hive surface (W/m^2)
-    solar_radiation = solar_constant * solar_angle * 0.7  # Reduce for atmospheric absorption
-
-    # Assume hive surface area (adjust as needed) - in m^2
-    hive_surface_area = 0.25  # Example: 0.25 square meters
-
-    # Solar heat gain (Watts)
+    solar_radiation = solar_constant * solar_angle * 0.7
+    hive_surface_area = 0.25
     solar_heat_gain = solar_radiation * hive_surface_area
 
     return solar_heat_gain
@@ -342,10 +319,6 @@ def create_hive_boxes(species):
     return boxes
 
 def is_daytime_calc(lat: float, lon: float) -> bool:
-    """
-    Determine if it's daytime based on GPS coordinates.
-    Uses the `suntime` library.  Install it with: `pip install suntime`
-    """
     try:
         from suntime import Sun, SunTimeException
         sun = Sun(lat, lon)
@@ -353,14 +326,14 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
-            now = datetime.datetime.now(pytz.utc)  # Use timezone-aware datetime
+            now = datetime.datetime.now(pytz.utc)
 
             return sr < now < ss
         except SunTimeException:
-            return True  # Default to daytime if sunrise/sunset can't be calculated
+            return True
     except ImportError:
         st.warning("`suntime` library not found.  Please install it for accurate daytime calculation.")
-        return True # If suntime is not installed, default to True
+        return True
 
 def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
@@ -402,7 +375,7 @@ def main():
         is_daytime = is_daytime_calc(lat, lon)
         st.write(f"It is daytime: {is_daytime}")
 
-        weather = get_weather_data(lat, lon, is_daytime)  # Pass is_daytime to weather data function
+        weather = get_weather_data(lat, lon, is_daytime)
         if weather and weather.get("temperature") is not None:
             ambient_temp = weather["temperature"]
             st.write(f"Current Ambient Temperature: {ambient_temp} °C")
@@ -420,13 +393,13 @@ def main():
         )
 
         st.subheader("Simulation Results")
-        col1, col2, col3 = st.columns(3)  # Adjusted for the new metric
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C")
             st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W")
         with col2:
-            st.metric("Solar Heat Gain", f"{results['solar_heat_gain']:.2f} W")  # Display solar heat gain
+            st.metric("Solar Heat Gain", f"{results['solar_heat_gain']:.2f} W")
         with col3:
             st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}")
             st.write("Heat Gain:", f"{results['heat_gain']:.3f}")
