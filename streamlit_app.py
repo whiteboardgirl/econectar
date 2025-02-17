@@ -104,27 +104,11 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
         temp_adj += 2 if is_daytime else -0.5
     return temp_adj
 
-def calculate_solar_heat(time_of_day: int, species: BeeSpecies) -> float:
-    normalized_time = abs((time_of_day - 12) / 12)
-    solar_factor = 1 - (normalized_time ** 2)
-
-    if species.activity_profile == "Diurnal":
-        activity_boost = 1.2 if 6 <= time_of_day < 18 else 0.8
-    elif species.activity_profile == "Morning":
-        activity_boost = 1.3 if 6 <= time_of_day < 12 else 0.7
-    else:
-        activity_boost = 1.3 if 12 <= time_of_day < 18 else 0.7
-
-    return 5 * solar_factor * activity_boost
-
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
                               boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
-                              altitude: float, rain_intensity: float, surface_area_exponent: float, time_of_day: int) -> Dict:
+                              altitude: float, rain_intensity: float, surface_area_exponent: float) -> Dict:
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
     temp_adj -= (rain_intensity * 3)
-
-    solar_heat = calculate_solar_heat(time_of_day, species)
-    temp_adj += solar_heat
 
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
 
@@ -162,8 +146,7 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
         "box_temps": box_temps,
         "metabolic_heat": metabolic_heat,
         "thermal_resistance": total_resistance,
-        "heat_gain": heat_gain,
-        "solar_heat": solar_heat
+        "heat_gain": heat_gain
     }
 
 def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
@@ -278,7 +261,7 @@ def main():
     altitude = get_altitude(lat, lon)
 
     if altitude is None:
-        st.warning("Could not retrieve altitude. Please enter altitude manually.")
+        st.warning("Could not retrieve altitude. Please enter altitude manually.", key = "alt_warning")
         altitude = st.slider("Altitude (m)", 0, 5000, 100, key="manual_altitude")
     else:
         st.write(f"Altitude: {altitude} m")
@@ -288,37 +271,37 @@ def main():
         ambient_temp = weather["temperature"]
         st.write(f"Current Ambient Temperature: {ambient_temp} °C")
     else:
-        st.warning("Weather data unavailable. Please use the slider below.")
+        st.warning("Weather data unavailable. Please use the slider below.", key = "weather_warning")
         ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0, key="manual_temp")
 
+    is_daytime = st.toggle("Is it Daytime?", True, key="is_daytime")
     time_of_day = st.slider("Time of Day (24-hour format)", 0, 23, 12, key="time_of_day")
-    is_daytime = 6 <= time_of_day < 18  # Daytime is between 6 AM and 6 PM
 
-    if st.button("Run Simulation", key="run_simulation"):
+    if st.button("Run Simulation", key="run_simulation_button"):
         results = simulate_hive_temperature(
             species, colony_size_pct, nest_thickness, boxes,
-            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent, time_of_day  # Pass time_of_day
+            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent
         )
 
         st.subheader("Simulation Results")
         col1, col2 = st.columns(2)
         with col1:
-            st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C")
-            st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W")
+            st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C", key="base_temp_metric")
+            st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W", key = "metabolic_heat_metric")
         with col2:
-            st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}")
-            st.write("Heat Gain:", f"{results['heat_gain']:.3f}")
+            st.write("Thermal Resistance:", f"{results['thermal_resistance']:.3f}", key = "thermal_resistance_write")
+            st.write("Heat Gain:", f"{results['heat_gain']:.3f}", key = "heat_gain_write")
 
-        st.subheader("Temperature Status")
+        st.subheader("Temperature Status", key = "temp_status")
         if results['base_temp'] < species.ideal_temp[0]:
-            st.error(f"⚠️ Alert: Hive is too cold! Current temperature ({results['base_temp']:.1f}°C) is below the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
+            st.error(f"⚠️ Alert: Hive is too cold! Current temperature ({results['base_temp']:.1f}°C) is below the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key = "too_cold")
         elif results['base_temp'] > species.ideal_temp[1]:
-            st.error(f"⚠️ Alert: Hive is too hot! Current temperature ({results['base_temp']:.1f}°C) is above the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
+            st.error(f"⚠️ Alert: Hive is too hot! Current temperature ({results['base_temp']:.1f}°C) is above the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key = "too_hot")
         else:
-            st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
+            st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).", key = "just_right")
 
-        st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
-        st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True)
+        st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True, key="box_temp_chart")
+        st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True, key="hive_3d_chart")
 
 if __name__ == "__main__":
     main()
