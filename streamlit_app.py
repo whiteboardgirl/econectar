@@ -254,8 +254,12 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
         
         # Enhanced cooling effect calculation - scale from 0-5 to 0-8°C
         cooling_temp = (box.cooling_effect / 5.0) * MAX_COOLING_TEMP
+        
+        # Increase cooling effectiveness when temperature is too high
         if box_temp > species.ideal_temp[1]:
-            cooling_temp *= 1.5  # Enhanced cooling when too hot
+            temp_excess = box_temp - species.ideal_temp[1]
+            cooling_multiplier = 1.0 + (temp_excess / 10.0)  # More cooling for higher temperatures
+            cooling_temp *= cooling_multiplier
         
         # Apply cooling effect
         box_temp -= cooling_temp
@@ -270,6 +274,15 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
         box_temps.append(box_temp)
 
     hive_temp = box_temps[-1]
+
+    # Calculate the average temperature reduction from cooling
+    avg_cooling = sum([(box.cooling_effect / 5.0) * MAX_COOLING_TEMP for box in boxes]) / len(boxes)
+    
+    # Apply cooling effect to base temperature
+    if hive_temp > species.ideal_temp[1]:
+        temp_excess = hive_temp - species.ideal_temp[1]
+        cooling_multiplier = 1.0 + (temp_excess / 10.0)
+        hive_temp -= (avg_cooling * cooling_multiplier)
 
     return {
         "base_temp": hive_temp,
