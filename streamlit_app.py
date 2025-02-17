@@ -489,8 +489,11 @@ def create_hive_boxes(species):
         with cols[2]:
             box.depth = st.number_input(f"Box {box.id} Depth (cm)", min_value=10, max_value=50, value=int(box.depth))
         with cols[3]:
-            box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect", min_value=0.0, max_value=5.0, 
-                                                   value=box.cooling_effect, step=0.1)
+            box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect (0-1)", 
+                                               min_value=0.0, 
+                                               max_value=1.0,
+                                               value=min(box.cooling_effect, 1.0),
+                                               step=0.1)
         boxes.append(box)
     return boxes
 
