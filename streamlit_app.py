@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import requests
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
@@ -139,7 +140,7 @@ def plot_organic_hive_structure(boxes, honey_volumes):
     fig.colorbar(scatter, label='Position in hive (cm)')
     
     return fig
-    
+
 def plot_curved_hive_surface(boxes):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
@@ -210,14 +211,13 @@ def main():
             with cols[2]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
             with cols[3]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
 
-st.subheader("Organic Hive Structure")
-fig_organic = plot_organic_hive_structure(st.session_state.boxes, results['box_temps'])
-st.pyplot(fig_organic)
+    st.subheader("Organic Hive Structure")
+    fig_organic = plot_organic_hive_structure(st.session_state.boxes, results['box_temps'])
+    st.pyplot(fig_organic)
 
-st.subheader("Curved Interior Surface")
-fig_curved = plot_curved_hive_surface(st.session_state.boxes)
-st.pyplot(fig_curved)
-
+    st.subheader("Curved Interior Surface")
+    fig_curved = plot_curved_hive_surface(st.session_state.boxes)
+    st.pyplot(fig_curved)
 
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
