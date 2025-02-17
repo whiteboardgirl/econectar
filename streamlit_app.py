@@ -94,6 +94,29 @@ def calculate_metabolic_heat(species: BeeSpecies, colony_size_pct: float, altitu
     activity_multiplier = 2.5
     return base_metabolic * activity_multiplier
 
+def calculate_solar_heat(time_of_day: int, species: BeeSpecies) -> float:
+    # Simplified model for solar heating:
+    # Peak heat is at noon, decreases towards morning and evening
+    # Assume a bell curve shape for simplicity
+    
+    # Normalize time to a 0 to 1 scale for a bell curve effect
+    normalized_time = abs((time_of_day - 12) / 12)  # 0 at noon, 1 at midnight or midday
+    
+    # A simple bell curve where max heat is at noon
+    solar_factor = 1 - (normalized_time ** 2)  # This gives a peak at noon
+    
+    # Adjust for species activity (assuming species are more active during their profile time)
+    if species.activity_profile == "Diurnal":
+        activity_boost = 1.2 if 6 <= time_of_day < 18 else 0.8
+    elif species.activity_profile == "Morning":
+        activity_boost = 1.3 if 6 <= time_of_day < 12 else 0.7
+    else:  # Evening species
+        activity_boost = 1.3 if 12 <= time_of_day < 18 else 0.7
+    
+    # Base solar heating effect; adjust this value based on empirical data or further research
+    return 5 * solar_factor * activity_boost  # 5°C is an arbitrary high point for solar heating at noon
+
+
 def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies, is_daytime: bool) -> float:
     temp_adj = ambient_temp - (altitude * 6.5 / 1000)
     if species.activity_profile == "Diurnal":
@@ -105,10 +128,16 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
     return temp_adj
 
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
-                            boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
-                            altitude: float, rain_intensity: float, surface_area_exponent: float) -> Dict:
+                              boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
+                              altitude: float, rain_intensity: float, surface_area_exponent: float,
+                              time_of_day: int) -> Dict:
+    # Basic temperature adjustment
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
     temp_adj -= (rain_intensity * 3)
+    
+    # Solar radiation effect based on time of day
+    solar_heat = calculate_solar_heat(time_of_day, species)
+    temp_adj += solar_heat
     
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
     
@@ -146,7 +175,8 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
         "box_temps": box_temps,
         "metabolic_heat": metabolic_heat,
         "thermal_resistance": total_resistance,
-        "heat_gain": heat_gain
+        "heat_gain": heat_gain,
+        "solar_heat": solar_heat
     }
 
 def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
@@ -302,6 +332,18 @@ def main():
         
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
         st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True)
+
+# Add time selection
+    time_of_day = st.slider("Time of Day (24-hour format)", 0, 23, 12)
+    is_daytime = 6 <= time_of_day < 18  # Assuming daytime from 6 AM to 6 PM
+    
+    # ... existing code
+    
+    if st.button("Run Simulation"):
+        results = simulate_hive_temperature(
+            species, colony_size_pct, nest_thickness, boxes,
+            ambient_temp, is_daytime, altitude, rain_intensity, surface_area_exponent, time_of_day
+        )
 
 if __name__ == "__main__":
     main()
