@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import requests
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
@@ -102,6 +103,48 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
         'thermal_resistance': total_resistance
     }
 
+def plot_organic_hive_structure(boxes, temperatures):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for box, temp in zip(boxes, temperatures):
+        num_pots = int(temp * 5)  # Arbitrary scaling for visualization
+        x = np.random.uniform(0, box.width, num_pots)
+        y = np.random.uniform(0, box.depth, num_pots)
+        z = np.random.uniform(0, box.height, num_pots)
+        sizes = np.random.uniform(10, 30, num_pots)
+        
+        scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=temp, cmap='YlOrRd')
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Depth (cm)')
+    ax.set_zlabel('Height (cm)')
+    ax.set_title('Stingless Bee Hive - Organic Structure')
+    
+    fig.colorbar(scatter, label='Temperature (°C)')
+    
+    return fig
+
+def plot_curved_hive_surface(boxes):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for box in boxes:
+        x = np.linspace(0, box.width, 50)
+        y = np.linspace(0, box.depth, 50)
+        X, Y = np.meshgrid(x, y)
+        
+        Z = 5 * np.sin(X/10) + 5 * np.cos(Y/10)
+        
+        ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.7)
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Depth (cm)')
+    ax.set_zlabel('Height (cm)')
+    ax.set_title('Stingless Bee Hive - Curved Interior Surface')
+    
+    return fig
+
 def render_species_controls():
     species_name = st.sidebar.selectbox("Bee Species", list(SPECIES_CONFIG.keys()))
     species = SPECIES_CONFIG[species_name]
@@ -123,14 +166,14 @@ def main():
     species, params = render_species_controls()
 
     if 'boxes' not in st.session_state:
-        if species.name == "Melipona":
+        if species.name == "Melipona":  # INPA type
             st.session_state.boxes = [
                 Box(1, 23, 6, 23, 1.0),
                 Box(2, 23, 6, 23, 0.5),
                 Box(3, 23, 6, 23, 2.0),
                 Box(4, 23, 6, 23, 1.5)
             ]
-        else:
+        else:  # AF type for smaller bees
             st.session_state.boxes = [
                 Box(1, 13, 5, 13, 1.0),
                 Box(2, 13, 5, 13, 0.5),
@@ -168,6 +211,13 @@ def main():
             with cols[2]: box.depth = st.number_input(f"Depth Box {box.id}", 10, 30, int(box.depth))
             with cols[3]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
             with cols[4]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
+
+    st.subheader("3D Visualizations")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.pyplot(plot_organic_hive_structure(st.session_state.boxes, results['box_temps']))
+    with col2:
+        st.pyplot(plot_curved_hive_surface(st.session_state.boxes))
 
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
