@@ -27,7 +27,6 @@ class HiveBox:
     cooling_effect: float
     propolis_thickness: float = 1.5
 
-# Updated species configuration with adjusted metabolic rates
 SPECIES_CONFIG: Dict[str, BeeSpecies] = {
     "Melipona": BeeSpecies(
         name="Melipona",
@@ -232,7 +231,7 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
         "base_temp": hive_temp,
         "box_temps": box_temps,
         "metabolic_heat": metabolic_heat,
-        "solar_heat_gain": solar_heat_gain,  # Include solar heat gain in results
+        "solar_heat_gain": solar_heat_gain,
         "thermal_resistance": total_resistance,
         "heat_gain": heat_gain
     }
@@ -377,7 +376,6 @@ def main():
         else:
             st.write(f"Altitude: {altitude} m")
 
-        # Determine daytime based on GPS
         is_daytime = is_daytime_calc(lat, lon)
         st.write(f"It is daytime: {is_daytime}")
 
