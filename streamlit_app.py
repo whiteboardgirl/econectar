@@ -104,19 +104,11 @@ def calculate_metabolic_heat(species: BeeSpecies, colony_size_pct: float, altitu
     colony_size = species.colony_size_factor * (colony_size_pct / 100.0)
     return colony_size * species.metabolic_rate * oxygen_factor
 
-def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies, 
-                       is_daytime: bool, apply_altitude_adjustment: bool) -> float:
-    """
-    Adjust ambient temperature.
-    
-    If apply_altitude_adjustment is True, subtract a lapse rate (6.5°C per 1000 m);
-    otherwise, use the ambient temperature directly.
-    Then apply a species/activity adjustment.
-    """
+def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies, is_daytime: bool, apply_altitude_adjustment: bool = True) -> float:
+    temp_adj = ambient_temp
     if apply_altitude_adjustment:
-        temp_adj = ambient_temp - (altitude * 6.5 / 1000)
-    else:
-        temp_adj = ambient_temp
+        temp_adj -= (altitude * 6.5 / 1000)
+    
     if species.activity_profile == "Diurnal":
         temp_adj += 2 if is_daytime else -2
     elif species.activity_profile == "Morning":
@@ -128,7 +120,7 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
                               boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
                               altitude: float, rain_intensity: float, surface_area_exponent: float,
-                              apply_altitude_adjustment: bool) -> Dict:
+                              apply_altitude_adjustment: bool = True) -> Dict:
     # Adjust ambient temperature based on altitude option and activity
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime, apply_altitude_adjustment)
     # Apply rain cooling effect: each 0.1 of rain intensity subtracts ~0.5°C.
