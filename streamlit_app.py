@@ -302,3 +302,6 @@ def main():
         
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
         st.plotly_chart(plot_hive_3d_structure(boxes, results["box_temps"]), use_container_width=True)
+
+if __name__ == "__main__":
+    main()
