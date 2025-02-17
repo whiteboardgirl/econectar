@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import requests
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
@@ -9,16 +10,17 @@ from typing import Dict, List, Any, Optional
 # ========================
 # Species Configuration
 # ========================
+
 @dataclass
 class MeliponaSpecies:
     name: str
-    metabolic_rate: float  # W/bee
-    colony_size_factor: int  # Bees per percentage
-    ideal_temp: tuple  # (min, max) in °C
-    humidity_range: tuple  # optimal RH range
-    nest_conductivity: float  # W/m·K
-    max_cooling: float  # Max cooling capacity (°C)
-    activity_profile: str  # Diurnal pattern
+    metabolic_rate: float # W/bee
+    colony_size_factor: int # Bees per percentage
+    ideal_temp: tuple # (min, max) in °C
+    humidity_range: tuple # optimal RH range
+    nest_conductivity: float # W/m·K
+    max_cooling: float # Max cooling capacity (°C)
+    activity_profile: str # Diurnal pattern
 
 SPECIES_CONFIG = {
     "Small (e.g., Tetragonula)": MeliponaSpecies(
@@ -56,13 +58,14 @@ SPECIES_CONFIG = {
 # ========================
 # Core Models
 # ========================
+
 @dataclass
 class Box:
     id: int
-    width: float  # cm
-    height: float  # cm
+    width: float # cm
+    height: float # cm
     cooling_effect: float
-    propolis_thickness: float = 1.5  # mm
+    propolis_thickness: float = 1.5 # mm
 
 # ========================
 # Thermal Calculations
@@ -91,20 +94,23 @@ def adjust_for_species_activity(temp: float, species: MeliponaSpecies, is_daytim
         return temp + (3 if is_daytime else -3)
     elif species.activity_profile == "Morning":
         return temp + (4 if is_daytime else -2)
-    else:  # Evening
+    else: # Evening
         return temp + (2 if is_daytime else -4)
 
 def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: List[Box], ambient_temp: float,
-                              is_daytime: bool, altitude: float) -> dict:
+                               is_daytime: bool, altitude: float) -> dict:
     """Core thermal model adapted for stingless bees."""
     # Environmental adjustments
     adj_temp = ambient_temp - (altitude * 6.5 / 1000)
     adj_temp = adjust_for_species_activity(adj_temp, species, is_daytime)
+
     # Metabolic calculations
     metabolic_heat = calculate_metabolic_heat(species, params['colony_size'], altitude)
+
     # Nest material properties
     nest_resistance = (params['nest_thickness']/1000)/species.nest_conductivity
-    total_resistance = nest_resistance + 0.04  # Air film resistance
+    total_resistance = nest_resistance + 0.04 # Air film resistance
+
     # Thermal equilibrium calculation
     surface_area = sum(calculate_box_surface_area(b.width, b.height) for b in boxes)
     if adj_temp > species.ideal_temp[1]:
@@ -117,7 +123,7 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
     # Box temperature adjustments
     box_temps = []
     for box in boxes:
-        propolis_effect = box.propolis_thickness * 0.02  # 0.02°C/mm insulation
+        propolis_effect = box.propolis_thickness * 0.02 # 0.02°C/mm insulation
         box_temp = hive_temp - box.cooling_effect + propolis_effect
         box_temps.append(max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp)))
 
@@ -129,18 +135,81 @@ def calculate_hive_temperature(species: MeliponaSpecies, params: dict, boxes: Li
     }
 
 # ========================
+# 3D Visualization Functions
+# ========================
+
+def plot_hive_temperature_surface(boxes, temperatures):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    x = [box.width for box in boxes]
+    y = [box.height for box in boxes]
+    z = temperatures
+    
+    x, y = np.meshgrid(x, y)
+    
+    surf = ax.plot_surface(x, y, z, cmap='viridis')
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Height (cm)')
+    ax.set_zlabel('Temperature (°C)')
+    ax.set_title('Hive Temperature Distribution')
+    
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    
+    return fig
+
+def plot_box_characteristics_3d(boxes, temperatures):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    x = [box.width for box in boxes]
+    y = [box.height for box in boxes]
+    z = [box.cooling_effect for box in boxes]
+    
+    scatter = ax.scatter(x, y, z, c=temperatures, cmap='coolwarm', s=100)
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Height (cm)')
+    ax.set_zlabel('Cooling Effect')
+    ax.set_title('Box Characteristics and Temperature')
+    
+    fig.colorbar(scatter, label='Temperature (°C)')
+    
+    return fig
+
+def plot_box_temperatures_3d(boxes, temperatures):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    x = [box.width for box in boxes]
+    y = [box.height for box in boxes]
+    z = np.zeros_like(x)
+    
+    dx = dy = 1  # Width of each bar
+    dz = temperatures
+    
+    ax.bar3d(x, y, z, dx, dy, dz, shade=True)
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Height (cm)')
+    ax.set_zlabel('Temperature (°C)')
+    ax.set_title('Box Temperatures')
+    
+    return fig
+
+# ========================
 # UI Components
 # ========================
+
 def render_species_controls():
     """Species selection and configuration."""
     species_name = st.sidebar.selectbox("Bee Species", list(SPECIES_CONFIG.keys()))
     species = SPECIES_CONFIG[species_name]
-
     st.sidebar.markdown(f"**{species.name} Characteristics:**")
     st.sidebar.write(f"- Ideal Temp: {species.ideal_temp[0]}–{species.ideal_temp[1]}°C")
     st.sidebar.write(f"- Humidity Range: {species.humidity_range[0]}–{species.humidity_range[1]}% RH")
     st.sidebar.write(f"- Activity Pattern: {species.activity_profile}")
-
     params = {
         'colony_size': st.sidebar.slider("Colony Size (%)", 0, 100, 50),
         'nest_thickness': st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0),
@@ -151,6 +220,7 @@ def render_species_controls():
 # ========================
 # Main Application
 # ========================
+
 def main():
     st.set_page_config(page_title="Meliponini Thermal Sim", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
@@ -161,13 +231,13 @@ def main():
             Box(1, 18, 8, 1.0),
             Box(2, 18, 8, 0.5),
             Box(3, 22, 10, 2.0),
-            Box(4, 20, 9, 1.5)  # Add a fourth box with example values
+            Box(4, 20, 9, 1.5)
         ]
-    elif len(st.session_state.boxes) != 4:  # If already initialized but not 4 boxes
+    elif len(st.session_state.boxes) != 4:
         while len(st.session_state.boxes) < 4:
             new_id = len(st.session_state.boxes) + 1
-            st.session_state.boxes.append(Box(new_id, 20, 9, 1.5))  # Add a new box
-        st.session_state.boxes = st.session_state.boxes[:4]  # Ensure no more than 4
+            st.session_state.boxes.append(Box(new_id, 20, 9, 1.5))
+        st.session_state.boxes = st.session_state.boxes[:4]
 
     # Species configuration
     species, params = render_species_controls()
@@ -205,11 +275,27 @@ def main():
             with cols[2]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
             with cols[3]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
 
+    # 3D Visualizations
+    st.subheader("3D Visualizations")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        fig_surface = plot_hive_temperature_surface(st.session_state.boxes, results['box_temps'])
+        st.pyplot(fig_surface)
+
+    with col2:
+        fig_scatter = plot_box_characteristics_3d(st.session_state.boxes, results['box_temps'])
+        st.pyplot(fig_scatter)
+
+    st.subheader("Box Temperature Comparison")
+    fig_bar = plot_box_temperatures_3d(st.session_state.boxes, results['box_temps'])
+    st.pyplot(fig_bar)
+
 # Helper functions for API calls
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
     try:
-        response = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}¤t_weather=true")
+        response = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true")
         return response.json()['current_weather']['temperature']
     except:
         return None
