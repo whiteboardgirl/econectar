@@ -54,13 +54,16 @@ SPECIES_CONFIG = {
 @dataclass
 class Box:
     id: int
-    width: float
-    height: float
-    depth: float
+    width: float  # cm
+    height: float  # cm
+    depth: float  # cm
     cooling_effect: float
-    propolis_thickness: float = 1.5
+    propolis_thickness: float = 1.5  # mm
 
 def calculate_box_surface_area(width_cm: float, height_cm: float, depth_cm: float) -> float:
+    """
+    Calculate the total surface area for a rectangular box in square meters.
+    """
     width_m, height_m, depth_m = width_cm / 100, height_cm / 100, depth_cm / 100
     return 2 * (width_m * depth_m + width_m * height_m + depth_m * height_m)
 
@@ -167,15 +170,16 @@ def main():
 
     species, params = render_species_controls()
 
-    if 'boxes' not in st.session_state:
-        if species.name == "Melipona":  # INPA type
+    # Update box dimensions based on selected species
+    if 'boxes' not in st.session_state or st.session_state.last_species != species.name:
+        if species.name == "Melipona":  # INPA type (Medium)
             st.session_state.boxes = [
                 Box(1, 23, 6, 23, 1.0),
                 Box(2, 23, 6, 23, 0.5),
                 Box(3, 23, 6, 23, 2.0),
                 Box(4, 23, 6, 23, 1.5)
             ]
-        else:  # AF type for smaller bees
+        elif species.name == "Tetragonula":  # AF type (Small)
             st.session_state.boxes = [
                 Box(1, 13, 5, 13, 1.0),
                 Box(2, 13, 5, 13, 0.5),
@@ -183,7 +187,15 @@ def main():
                 Box(4, 13, 5, 13, 1.5),
                 Box(5, 13, 5, 13, 1.0)
             ]
-
+        else:  # Scaptotrigona (Large)
+            st.session_state.boxes = [
+                Box(1, 25, 7, 25, 1.0),
+                Box(2, 25, 7, 25, 0.5),
+                Box(3, 25, 7, 25, 2.0),
+                Box(4, 25, 7, 25, 1.5)
+            ]
+        st.session_state.last_species = species.name
+        
     col1, col2 = st.columns(2)
     with col1:
         lat, lon = map(float, st.text_input("GPS Coordinates", "-3.4653,-62.2159").split(','))
@@ -193,6 +205,13 @@ def main():
         is_daytime = st.toggle("Daytime", True)
 
     results = calculate_hive_temperature(species, params, st.session_state.boxes, ambient_temp, is_daytime, altitude)
+        fig, ax = plt.subplots()
+ax.bar([f"Box {i+1}" for i in range(len(results['box_temps']))], results['box_temps'])
+ax.set_ylim(species.ideal_temp[0]-2, species.ideal_temp[1]+2)
+ax.set_xlabel("Box")
+ax.set_ylabel("Temperature (°C)")
+ax.set_title(f"Hive Temperature Distribution - {species.name}")
+st.pyplot(fig)
 
     st.subheader("Thermal Profile")
     col1, col2 = st.columns(2)
@@ -220,6 +239,8 @@ def main():
         st.pyplot(plot_organic_hive_structure(st.session_state.boxes, results['box_temps']))
     with col2:
         st.pyplot(plot_curved_hive_surface(st.session_state.boxes))
+
+
 
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
