@@ -184,7 +184,6 @@ def get_altitude(lat: float, lon: float) -> float | None:
         st.error(f"An unexpected error occurred: {e}")
         return None
 
-@st.cache_data(ttl=1, show_spinner=False)  # Cache for 1 second only
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
                               lid_thickness: float, boxes: List[HiveBox], ambient_temp: float,
                               is_daytime: bool, altitude: float, rain_intensity: float,
@@ -194,9 +193,6 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
     Simulates the temperature inside the hive, with enhanced heat retention and
     more responsive cooling effects.
     """
-    # Clear any previous cached values
-    st.cache_data.clear()
-    
     # Adjust ambient temperature for altitude, species behavior, and rain
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
     temp_adj -= (rain_intensity * 3)  # Enhanced rain cooling effect
@@ -655,7 +651,7 @@ def main():
 
     if st.button("Run Simulation", help="Calculate hive temperatures based on current parameters and display results."):
         # Add current timestamp to force update
-        simulation_time = datetime.datetime.now().timestamp()
+        st.session_state.simulation_time = datetime.datetime.now().timestamp()
         
         results = simulate_hive_temperature(
             species=species,
@@ -673,14 +669,14 @@ def main():
             day_of_year=datetime.datetime.now().timetuple().tm_yday
         )
         
-        # Store results in session state to maintain between reruns
+        # Store results in session state
         st.session_state.last_results = results
-        st.session_state.last_simulation_time = simulation_time
 
     # Display results if they exist
     if 'last_results' in st.session_state:
         results = st.session_state.last_results
         st.subheader("Simulation Results")
+        
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(
@@ -719,14 +715,17 @@ def main():
         else:
             st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
             
+        # Force graph updates by adding simulation time to the key
         st.plotly_chart(
             plot_box_temperatures(boxes, results["box_temps"], species), 
             use_container_width=True,
+            key=f"temp_plot_{st.session_state.get('simulation_time', 0)}",
             help="Visual representation of temperature distribution across hive boxes."
         )
         st.plotly_chart(
             plot_hive_3d_structure(boxes, results["box_temps"], species), 
             use_container_width=True,
+            key=f"3d_plot_{st.session_state.get('simulation_time', 0)}",
             help="3D visualization of the hive structure with temperature mapping."
         )
 
