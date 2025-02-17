@@ -118,9 +118,53 @@ def render_species_controls():
     }
     return species, params
 
+def plot_organic_hive_structure(boxes, honey_volumes):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for box, honey_volume in zip(boxes, honey_volumes):
+        num_pots = int(honey_volume / 5)  # Assume each pot holds about 5 ml
+        x = np.random.uniform(0, box.width, num_pots)
+        y = np.random.uniform(0, box.height, num_pots)
+        z = np.random.uniform(0, box.width, num_pots)  # Assuming depth is similar to width
+        sizes = np.random.uniform(10, 30, num_pots)  # Vary pot sizes
+        
+        scatter = ax.scatter(x, y, z, s=sizes, alpha=0.6, c=z, cmap='YlOrRd')
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Height (cm)')
+    ax.set_zlabel('Depth (cm)')
+    ax.set_title('Stingless Bee Hive - Organic Structure')
+    
+    fig.colorbar(scatter, label='Position in hive (cm)')
+    
+    return fig
+    
+def plot_curved_hive_surface(boxes):
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for box in boxes:
+        x = np.linspace(0, box.width, 50)
+        y = np.linspace(0, box.height, 50)
+        X, Y = np.meshgrid(x, y)
+        
+        # Generate a curved surface
+        Z = 5 * np.sin(X/10) + 5 * np.cos(Y/10)
+        
+        ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.7)
+    
+    ax.set_xlabel('Width (cm)')
+    ax.set_ylabel('Height (cm)')
+    ax.set_zlabel('Depth (cm)')
+    ax.set_title('Stingless Bee Hive - Curved Interior Surface')
+    
+    return fig
+
 def main():
     st.set_page_config(page_title="Meliponini Thermal Sim", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
+
 
     if 'boxes' not in st.session_state:
         st.session_state.boxes = [
@@ -165,6 +209,15 @@ def main():
             with cols[1]: box.height = st.number_input(f"Height Box {box.id}", 5, 20, int(box.height))
             with cols[2]: box.cooling_effect = st.number_input(f"Cooling Box {box.id}", 0.0, 5.0, box.cooling_effect)
             with cols[3]: box.propolis_thickness = st.number_input(f"Propolis Box {box.id}", 0.0, 5.0, box.propolis_thickness)
+
+st.subheader("Organic Hive Structure")
+fig_organic = plot_organic_hive_structure(st.session_state.boxes, results['box_temps'])
+st.pyplot(fig_organic)
+
+st.subheader("Curved Interior Surface")
+fig_curved = plot_curved_hive_surface(st.session_state.boxes)
+st.pyplot(fig_curved)
+
 
 @st.cache_data
 def get_temperature(lat: float, lon: float) -> float:
