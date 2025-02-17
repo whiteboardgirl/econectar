@@ -123,10 +123,10 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
                               apply_altitude_adjustment: bool = True) -> Dict:
     # Adjust ambient temperature based on altitude option and activity
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime, apply_altitude_adjustment)
-    # Apply rain cooling effect: each 0.1 of rain intensity subtracts ~0.5°C.
-    temp_adj -= (rain_intensity * 5)
+    # Apply rain cooling effect: each 0.1 of rain intensity subtracts ~0.4°C now.
+    temp_adj -= (rain_intensity * 4)
     
-    metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
+    metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude) * 1.1  # Increase metabolic heat
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
     total_resistance = nest_resistance + 0.04
     
@@ -136,9 +136,9 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
         for box in boxes
     )
     
-    adjusted_surface = total_surface_area ** surface_area_exponent
+    adjusted_surface = total_surface_area ** (surface_area_exponent - 0.1)
     heat_gain = (metabolic_heat * total_resistance) / adjusted_surface
-    cooling = min(species.max_cooling, heat_gain)
+    cooling = min(species.max_cooling * 0.8, heat_gain)
     
     # Determine hive temperature based on ideal range
     if temp_adj > species.ideal_temp[1]:
@@ -148,7 +148,7 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
     
     box_temps = []
     for box in boxes:
-        box_temp = hive_temp - box.cooling_effect + (box.propolis_thickness * 0.02)
+        box_temp = hive_temp - box.cooling_effect + (box.propolis_thickness * 0.01)
         box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
         box_temps.append(box_temp)
     
