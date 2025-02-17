@@ -9,6 +9,7 @@ import pytz
 import os
 from timezonefinder import TimezoneFinder
 
+# Data classes
 @dataclass
 class BeeSpecies:
     name: str
@@ -29,6 +30,7 @@ class HiveBox:
     cooling_effect: float
     propolis_thickness: float = 1.5
 
+# Bee species configuration
 SPECIES_CONFIG: Dict[str, BeeSpecies] = {
     "Melipona": BeeSpecies(
         name="Melipona",
@@ -122,6 +124,7 @@ SPECIES_CONFIG: Dict[str, BeeSpecies] = {
     )
 }
 
+# Utility functions
 def parse_gps_input(gps_str: str) -> Tuple[float, float] | None:
     try:
         lat, lon = map(float, gps_str.strip().split(','))
@@ -224,42 +227,51 @@ def calculate_solar_heat_gain(lat: float, lon: float, is_daytime: bool, day_of_y
     return solar_heat_gain
 
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
-                              boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
-                              altitude: float, rain_intensity: float, surface_area_exponent: float,
-                              lat: float, lon: float, day_of_year: int) -> Dict:
+                              lid_thickness: float, boxes: List[HiveBox], ambient_temp: float,
+                              is_daytime: bool, altitude: float, rain_intensity: float,
+                              surface_area_exponent: float, lat: float, lon: float,
+                              day_of_year: int) -> Dict:
     """
-    Simulates the temperature inside the hive based on various parameters.
+    Simulates the temperature inside the hive based on various parameters,
+    including the effect of a closed lid that helps retain heat.
     """
+    # Adjust ambient temperature for altitude, species behavior, and rain
     temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
     temp_adj -= (rain_intensity * 3)
 
+    # Calculate heat contributions from metabolism and solar gain
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
     solar_heat_gain = calculate_solar_heat_gain(lat, lon, is_daytime, day_of_year)
     total_heat = metabolic_heat + solar_heat_gain
 
+    # Calculate thermal resistances: nest wall, propolis, and now lid resistance
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
     propolis_resistance = sum(box.propolis_thickness * 0.015 for box in boxes)
-    total_resistance = nest_resistance + propolis_resistance + 0.08
+    LID_CONDUCTIVITY = 0.05  # Assumed conductivity for the lid material
+    lid_resistance = (lid_thickness / 1000) / LID_CONDUCTIVITY
 
+    total_resistance = nest_resistance + propolis_resistance + lid_resistance + 0.08
+
+    # Calculate total surface area of all boxes (in m^2)
     total_surface_area = sum(
         2 * ((box.width * box.height) + (box.width * box.depth) + (box.height * box.depth)) / 10000
         for box in boxes
     )
-
     adjusted_surface = total_surface_area ** surface_area_exponent
-    # Ensure adjusted_surface is not zero to prevent division by zero
-    adjusted_surface = max(adjusted_surface, 0.0001)  # Ensure it's never zero
+    adjusted_surface = max(adjusted_surface, 0.0001)  # Prevent division by zero
+
     heat_gain = (total_heat * total_resistance) / adjusted_surface
     heat_gain *= 1.5
-
     cooling = min(species.max_cooling * 0.7, heat_gain)
 
+    # Determine the base hive temperature
     if temp_adj > species.ideal_temp[1]:
         hive_temp = temp_adj - cooling
     else:
         temp_difference = species.ideal_temp[1] - temp_adj
         hive_temp = temp_adj + min(heat_gain, temp_difference)
 
+    # Calculate temperature for each hive box
     box_temps = []
     for box in boxes:
         box_temp = hive_temp - (box.cooling_effect * 0.7)
@@ -320,13 +332,12 @@ def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species
         z_top = [z_offset + box.height] * 4
         fig.add_trace(go.Mesh3d(
             x=x, y=y, z=z_top,
-            i=[0], j=[1], k=[2],
             colorscale=[[0, 'blue'], [0.5, 'yellow'], [1, 'red']],
             intensity=[temp],
             showscale=False
         ))
 
-        z_offset += box.height + 2  # Add spacing between boxes
+        z_offset += box.height + 2  # Spacing between boxes
 
     fig.update_layout(
         title="3D Hive Structure with Temperature Distribution",
@@ -340,8 +351,8 @@ def plot_hive_3d_structure(boxes: List[HiveBox], box_temps: List[float], species
         ),
         showlegend=True
     )
-
     return fig
+
 def create_hive_boxes(species):
     if species.name == "Melipona":
         default_boxes = [
@@ -369,7 +380,8 @@ def create_hive_boxes(species):
         with cols[2]:
             box.depth = st.number_input(f"Box {box.id} Depth (cm)", min_value=10, max_value=50, value=int(box.depth))
         with cols[3]:
-            box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect", min_value=0.0, max_value=5.0, value=box.cooling_effect, step=0.1)
+            box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect", min_value=0.0, max_value=5.0, 
+                                                   value=box.cooling_effect, step=0.1)
         boxes.append(box)
     return boxes
 
@@ -386,105 +398,23 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         from timezonefinder import TimezoneFinder
 
         sun = Sun(lat, lon)
-        today = datetime.date.today()
-
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
-        if timezone_str:
-            local_tz = pytz.timezone(timezone_str)
-        else:
-            local_tz = pytz.utc
+        local_tz = pytz.timezone(timezone_str) if timezone_str else pytz.utc
+        if not timezone_str:
             st.warning("Could not determine local timezone. Using UTC as default.")
 
-        def ensure_datetime(value, date_context):
-            """
-            Convert value to a datetime object.
-            - If already a datetime, return as-is.
-            - If a time, combine with date_context.
-            - If a date, combine with midnight.
-            """
-            if isinstance(value, datetime.datetime):
-                return value
-            elif isinstance(value, datetime.time):
-                return datetime.datetime.combine(date_context, value)
-            elif isinstance(value, datetime.date):
-                # If only a date is provided, assume midnight.
-                return datetime.datetime.combine(value, datetime.time.min)
-            else:
-                raise ValueError("Value cannot be converted to datetime.")
-
-        try:
-            sr = sun.get_sunrise_time(today)
-            ss = sun.get_sunset_time(today)
-
-            sr_dt = ensure_datetime(sr, today)
-            ss_dt = ensure_datetime(ss, today)
-
-            # Localize or convert to local timezone
-            if sr_dt.tzinfo is None:
-                sr_dt = local_tz.localize(sr_dt)
-            else:
-                sr_dt = sr_dt.astimezone(local_tz)
-
-            if ss_dt.tzinfo is None:
-                ss_dt = local_tz.localize(ss_dt)
-            else:
-                ss_dt = ss_dt.astimezone(local_tz)
-
-            now = datetime.datetime.now(local_tz)
-            return sr_dt < now < ss_dt
-
-        except SunTimeException as e:
-            st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
-            return True
-
-    except ImportError:
-        st.warning("`suntime` library not found. Please install it for accurate daytime calculation.")
-        return True
-    except Exception as e:
-        st.error(f"An unexpected error occurred: {e}")
-        return True
-
-@st.cache_data(show_spinner=False)
-def is_daytime_calc(lat: float, lon: float) -> bool:
-    """
-    Determine if it's daytime based on GPS coordinates.
-    Uses the `suntime` library and local timezone for calculations.
-    """
-    try:
-        from suntime import Sun, SunTimeException
-        import datetime
-        import pytz
-        from timezonefinder import TimezoneFinder
-
-        sun = Sun(lat, lon)
-        
-        tf = TimezoneFinder()
-        timezone_str = tf.timezone_at(lat=lat, lng=lon)
-        if timezone_str:
-            local_tz = pytz.timezone(timezone_str)
-        else:
-            local_tz = pytz.utc
-            st.warning("Could not determine local timezone. Using UTC as default.")
-
-        # Get current time and make it timezone-aware
         now = datetime.datetime.now(local_tz)
         today = now.date()
 
         try:
-            # Get sunrise and sunset times
             sr = sun.get_local_sunrise_time(today)
             ss = sun.get_local_sunset_time(today)
-
-            # Make sunrise and sunset timezone-aware if they aren't already
             if sr.tzinfo is None:
                 sr = local_tz.localize(sr)
             if ss.tzinfo is None:
                 ss = local_tz.localize(ss)
-
-            # Compare with current time
             return sr < now < ss
-
         except SunTimeException as e:
             st.warning(f"Suntime calculation error: {e}. Assuming daytime.")
             return True
@@ -500,6 +430,7 @@ def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
 
+    # Sidebar: Bee species selection and parameters
     species_key = st.sidebar.selectbox("Select Bee Species", list(SPECIES_CONFIG.keys()))
     species = SPECIES_CONFIG[species_key]
 
@@ -510,15 +441,16 @@ def main():
 
     colony_size_pct = st.sidebar.slider("Colony Size (%)", 0, 100, 50)
     nest_thickness = st.sidebar.slider("Nest Wall Thickness (mm)", 1.0, 10.0, 5.0)
+    # New slider for lid thickness
+    lid_thickness = st.sidebar.slider("Lid Thickness (mm)", 1.0, 10.0, 5.0)
     rain_intensity = st.sidebar.slider("Rain Intensity (0 to 1)", 0.0, 1.0, 0.0, step=0.1)
     surface_area_exponent = st.sidebar.slider("Surface Area Exponent", 1.0, 2.0, 1.0, step=0.1)
 
+    # Advanced hive configuration
     with st.expander("Advanced Hive Configuration"):
         boxes = create_hive_boxes(species)
-
         gps_input = st.text_input("Enter GPS Coordinates (lat,lon)", "-3.4653,-62.2159")
         gps = parse_gps_input(gps_input)
-
         if gps is None:
             st.error("Invalid GPS input. Please enter coordinates as 'lat,lon'.")
             return
@@ -542,7 +474,7 @@ def main():
         else:
             st.warning("Weather data unavailable. Please use the slider below.")
             ambient_temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 28.0)
-        
+
     if st.button("Run Simulation"):
         day_of_year = datetime.datetime.now().timetuple().tm_yday
 
@@ -550,6 +482,7 @@ def main():
             species=species,
             colony_size_pct=colony_size_pct,
             nest_thickness=nest_thickness,
+            lid_thickness=lid_thickness,
             boxes=boxes,
             ambient_temp=ambient_temp,
             is_daytime=is_daytime,
@@ -563,7 +496,6 @@ def main():
 
         st.subheader("Simulation Results")
         col1, col2, col3 = st.columns(3)
-
         with col1:
             st.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C")
             st.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W")
