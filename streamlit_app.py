@@ -357,6 +357,7 @@ def create_hive_boxes(species):
             box.cooling_effect = st.number_input(f"Box {box.id} Cooling Effect", min_value=0.0, max_value=5.0, value=box.cooling_effect, step=0.1)
         boxes.append(box)
     return boxes
+
 @st.cache_data(show_spinner=False)
 def is_daytime_calc(lat: float, lon: float) -> bool:
     """
@@ -369,20 +370,19 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
         sun = Sun(lat, lon)
         today = datetime.date.today()
 
-        # Determine local timezone
         tf = TimezoneFinder()
         timezone_str = tf.timezone_at(lat=lat, lng=lon)
+
         if timezone_str:
             timezone = pytz.timezone(timezone_str)
         else:
-            timezone = pytz.utc  # Default to UTC if timezone lookup fails
+            timezone = pytz.utc
             st.warning("Could not determine local timezone. Using UTC as default.")
 
         try:
             sr = sun.get_sunrise_time(today)
             ss = sun.get_sunset_time(today)
             now = datetime.datetime.now(timezone)
-
             sr_localized = timezone.localize(datetime.datetime.combine(today, sr.time()))
             ss_localized = timezone.localize(datetime.datetime.combine(today, ss.time()))
 
@@ -397,7 +397,6 @@ def is_daytime_calc(lat: float, lon: float) -> bool:
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
         return True
-
 @st.cache_data(show_spinner=False)
 def get_timezone(lat: float, lon: float) -> str | None:
     """
@@ -424,7 +423,6 @@ def get_timezone(lat: float, lon: float) -> str | None:
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
         return None
-
 def main():
     st.set_page_config(page_title="Stingless Bee Hive Thermal Simulator", layout="wide")
     st.title("🍯 Stingless Bee Hive Thermal Simulator")
