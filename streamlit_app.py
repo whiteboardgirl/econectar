@@ -108,8 +108,17 @@ def adjust_temperature(ambient_temp: float, altitude: float, species: BeeSpecies
 def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_thickness: float,
                               boxes: List[HiveBox], ambient_temp: float, is_daytime: bool,
                               altitude: float, rain_intensity: float, surface_area_exponent: float) -> Dict:
-    temp_adj = adjust_temperature(ambient_temp, altitude, species, is_daytime)
-    temp_adj -= (rain_intensity * 5)
+    # Adjust temperature based on altitude and activity
+    temp_adj = ambient_temp - (altitude * 6.5 / 1000)  # Maybe adjust this factor
+    temp_adj -= rain_intensity * 3  # Reduced from 5 to 3 for a less drastic effect
+    
+    # Adjust for activity profile - might need more nuanced adjustments
+    activity_adjustment = {
+        "Diurnal": 2 if is_daytime else -2,
+        "Morning": 3 if is_daytime else -1,
+        "Evening": 1 if not is_daytime else -1
+    }.get(species.activity_profile, 0)
+    temp_adj += activity_adjustment
     
     metabolic_heat = calculate_metabolic_heat(species, colony_size_pct, altitude)
     nest_resistance = (nest_thickness / 1000) / species.nest_conductivity
@@ -122,26 +131,14 @@ def simulate_hive_temperature(species: BeeSpecies, colony_size_pct: float, nest_
     
     adjusted_surface = total_surface_area ** surface_area_exponent
     heat_gain = (metabolic_heat * total_resistance) / adjusted_surface
-    cooling = min(species.max_cooling, heat_gain)
+    cooling = min(species.max_cooling * 0.75, heat_gain)  # Reduced max cooling effect
     
     if temp_adj > species.ideal_temp[1]:
         hive_temp = temp_adj - cooling
     else:
-        hive_temp = temp_adj + min(heat_gain, species.ideal_temp[1] - temp_adj)
+        hive_temp = temp_adj + min(heat_gain * 0.8, species.ideal_temp[1] - temp_adj)  # Scale heat gain
     
-    box_temps = []
-    for box in boxes:
-        box_temp = hive_temp - box.cooling_effect + (box.propolis_thickness * 0.02)
-        box_temp = max(species.ideal_temp[0], min(species.ideal_temp[1], box_temp))
-        box_temps.append(box_temp)
-    
-    return {
-        "base_temp": hive_temp,
-        "box_temps": box_temps,
-        "metabolic_heat": metabolic_heat,
-        "thermal_resistance": total_resistance,
-        "heat_gain": heat_gain
-    }
+    # ... rest of the function
 
 # Visualization Functions
 def plot_box_temperatures(boxes: List[HiveBox], box_temps: List[float], species: BeeSpecies) -> go.Figure:
