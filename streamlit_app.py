@@ -73,6 +73,17 @@ def calculate_metabolic_heat(species: MeliponaSpecies, colony_size_pct: float, a
     colony_size = species.colony_size_factor * colony_size_pct
     return colony_size * species.metabolic_rate * oxygen_factor
 
+def calculate_box_surface_area(width_cm: float, height_cm: float) -> float:
+    """
+    Calculate the total surface area for a hexagonal box in square meters.
+    Assumes a hexagon-based design where the width defines the distance between parallel sides.
+    """
+    width_m, height_m = width_cm / 100, height_cm / 100
+    side_length = width_m / math.sqrt(3)
+    hexagon_area = (3 * math.sqrt(3) / 2) * (side_length ** 2)
+    sides_area = 6 * side_length * height_m
+    return (2 * hexagon_area) + sides_area
+
 def adjust_for_species_activity(temp: float, species: MeliponaSpecies, is_daytime: bool) -> float:
     """Apply species-specific diurnal adjustments."""
     if species.activity_profile == "Diurnal":
