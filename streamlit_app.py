@@ -278,6 +278,16 @@ def main():
         col1.metric("Base Hive Temperature", f"{results['base_temp']:.1f} °C")
         col2.metric("Metabolic Heat Output", f"{results['metabolic_heat']:.2f} W")
         col3.metric("Heat Gain", f"{results['heat_gain']:.3f}")
+
+        # After displaying the simulation results
+        st.subheader("Temperature Status")
+        if results['base_temp'] < species.ideal_temp[0]:
+        st.error(f"⚠️ Alert: Hive is too cold! Current temperature ({results['base_temp']:.1f}°C) is below the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
+        elif results['base_temp'] > species.ideal_temp[1]:
+        st.error(f"⚠️ Alert: Hive is too hot! Current temperature ({results['base_temp']:.1f}°C) is above the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
+        else:
+        st.success(f"✅ Hive temperature ({results['base_temp']:.1f}°C) is within the ideal range ({species.ideal_temp[0]}-{species.ideal_temp[1]}°C).")
+
         
         # Visualizations
         st.plotly_chart(plot_box_temperatures(boxes, results["box_temps"], species), use_container_width=True)
