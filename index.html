@@ -5,128 +5,182 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Econectar - Native Bee Meliponiculture</title>
     <style>
-        :root {
-            --primary-color: #FFC107;
-            --secondary-color: #795548;
-            --text-color: #333;
-            --background-color: #fff8e1;
-        }
+        /* ... existing styles ... */
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--background-color);
-        }
-
-        header {
-            background-color: var(--primary-color);
-            padding: 2rem;
-            text-align: center;
-        }
-
-        nav {
-            background-color: var(--secondary-color);
-            padding: 1rem;
-        }
-
-        nav ul {
-            list-style: none;
+        .language-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             display: flex;
-            justify-content: center;
-            gap: 2rem;
+            gap: 10px;
         }
 
-        nav a {
+        .language-btn {
+            background: none;
+            border: 2px solid white;
             color: white;
-            text-decoration: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
             font-weight: bold;
         }
 
-        .hero {
-            text-align: center;
-            padding: 4rem 2rem;
+        .language-btn.active {
+            background: white;
+            color: var(--primary-color);
         }
 
-        .content {
+        .sitemap {
+            margin: 2rem auto;
             max-width: 1200px;
-            margin: 0 auto;
             padding: 2rem;
         }
 
-        .features {
+        .sitemap-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 2rem;
             margin-top: 2rem;
         }
 
-        .feature-card {
+        .sitemap-section {
             background: white;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        footer {
-            background-color: var(--secondary-color);
-            color: white;
-            text-align: center;
-            padding: 2rem;
-            margin-top: 2rem;
+        .sitemap-section h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .sitemap-section ul {
+            list-style: none;
+        }
+
+        .sitemap-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sitemap-section a {
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .sitemap-section a:hover {
+            color: var(--primary-color);
         }
     </style>
 </head>
 <body>
     <header>
+        <div class="language-selector">
+            <button class="language-btn active" data-lang="en">EN</button>
+            <button class="language-btn" data-lang="es">ES</button>
+            <button class="language-btn" data-lang="pt">PT</button>
+        </div>
         <h1>Econectar</h1>
-        <p>Preserving Native Bees Through Meliponiculture</p>
+        <p class="tagline" data-en="Preserving Native Bees Through Meliponiculture"
+           data-es="Preservando Abejas Nativas a través de la Meliponicultura"
+           data-pt="Preservando Abelhas Nativas através da Meliponicultura">
+        </p>
     </header>
 
     <nav>
         <ul>
-            <li><a href="#home">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="#home" class="nav-link" 
+                   data-en="Home" 
+                   data-es="Inicio" 
+                   data-pt="Início">Home</a></li>
+            <li><a href="#about" class="nav-link"
+                   data-en="About"
+                   data-es="Sobre"
+                   data-pt="Sobre">About</a></li>
+            <li><a href="#services" class="nav-link"
+                   data-en="Services"
+                   data-es="Servicios"
+                   data-pt="Serviços">Services</a></li>
+            <li><a href="#contact" class="nav-link"
+                   data-en="Contact"
+                   data-es="Contacto"
+                   data-pt="Contato">Contact</a></li>
         </ul>
     </nav>
 
-    <section class="hero">
-        <h2>Welcome to Econectar</h2>
-        <p>Where native bees thrive in harmony with nature</p>
+    <section class="sitemap">
+        <h2>Site Map</h2>
+        <div class="sitemap-grid">
+            <div class="sitemap-section">
+                <h3>Main Pages</h3>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/services">Services</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="sitemap-section">
+                <h3>Bee Species</h3>
+                <ul>
+                    <li><a href="/species/melipona">Melipona</a></li>
+                    <li><a href="/species/trigona">Trigona</a></li>
+                    <li><a href="/species/scaptotrigona">Scaptotrigona</a></li>
+                    <li><a href="/species/tetragonisca">Tetragonisca</a></li>
+                </ul>
+            </div>
+
+            <div class="sitemap-section">
+                <h3>Resources</h3>
+                <ul>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="/gallery">Photo Gallery</a></li>
+                    <li><a href="/research">Research</a></li>
+                    <li><a href="/publications">Publications</a></li>
+                </ul>
+            </div>
+
+            <div class="sitemap-section">
+                <h3>Community</h3>
+                <ul>
+                    <li><a href="/events">Events</a></li>
+                    <li><a href="/workshops">Workshops</a></li>
+                    <li><a href="/forum">Forum</a></li>
+                    <li><a href="/newsletter">Newsletter</a></li>
+                </ul>
+            </div>
+        </div>
     </section>
 
-    <main class="content">
-        <section id="about">
-            <h2>About Econectar</h2>
-            <p>Econectar is dedicated to the preservation and cultivation of native stingless bees through sustainable meliponiculture practices. We work with local communities to protect these essential pollinators and maintain biodiversity.</p>
-        </section>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const languageButtons = document.querySelectorAll('.language-btn');
+            
+            function changeLanguage(lang) {
+                // Update active button
+                languageButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    }
+                });
 
-        <section class="features">
-            <div class="feature-card">
-                <h3>Native Bee Conservation</h3>
-                <p>Learn about our efforts to protect and preserve native bee species in their natural habitats.</p>
-            </div>
-            <div class="feature-card">
-                <h3>Meliponiculture Training</h3>
-                <p>Join our workshops and learn sustainable practices for native stingless bee keeping.</p>
-            </div>
-            <div class="feature-card">
-                <h3>Community Engagement</h3>
-                <p>Discover how we work with local communities to promote bee conservation and sustainable practices.</p>
-            </div>
-        </section>
-    </main>
+                // Update content
+                document.querySelectorAll('[data-' + lang + ']').forEach(element => {
+                    const translation = element.getAttribute('data-' + lang);
+                    if (translation) {
+                        element.textContent = translation;
+                    }
+                });
+            }
 
-    <footer>
-        <p>&copy; 2024 Econectar. All rights reserved.</p>
-    </footer>
+            languageButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    changeLanguage(btn.dataset.lang);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
