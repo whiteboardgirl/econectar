@@ -1,734 +1,982 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meliponiculture - Stingless Bees</title>
-    <meta name="description" content="Learn about stingless bees and meliponiculture - sustainable beekeeping practices for native bee species">
+    <title>Econectar - Meliponicultura Sustentável</title>
+    <meta name="description" content="Conectando pessoas através da meliponicultura sustentável e conservação das abelhas nativas">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://stinglessbees.netlify.app/">
-    <meta property="og:title" content="Meliponiculture - Stingless Bees">
-    <meta property="og:description" content="Learn about stingless bees and sustainable beekeeping practices for native stingless bee species">
-    <meta property="og:image" content="https://stinglessbees.netlify.app/images/stingless-bee-cover.jpg">
+    <meta property="og:url" content="https://econectar.com/">
+    <meta property="og:title" content="Econectar - Meliponicultura Sustentável">
+    <meta property="og:description" content="Conectando pessoas através da meliponicultura sustentável">
+    <meta property="og:image" content="https://econectar.com/assets/images/hero/econectar-hero.jpg">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://stinglessbees.netlify.app/">
-    <meta property="twitter:title" content="Meliponiculture - Stingless Bees">
-    <meta property="twitter:description" content="Learn about stingless bees and sustainable beekeeping practices for native stingless bee species">
-    <meta property="twitter:image" content="https://stinglessbees.netlify.app/images/stingless-bee-cover.jpg">
+    <meta property="twitter:url" content="https://econectar.com/">
+    <meta property="twitter:title" content="Econectar - Meliponicultura Sustentável">
+    <meta property="twitter:description" content="Conectando pessoas através da meliponicultura sustentável">
+    <meta property="twitter:image" content="https://econectar.com/assets/images/hero/econectar-hero.jpg">
     
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
     
-    <style>
-        :root {
-            --primary-color: #ffc107;
-            --secondary-color: #795548;
-            --text-color: #333;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--light-color);
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        header {
-            background-color: var(--primary-color);
-            color: var(--dark-color);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-        }
-        
-        .logo img {
-            height: 50px;
-            margin-right: 10px;
-        }
-        
-        nav ul {
-            display: flex;
-            list-style: none;
-        }
-        
-        nav ul li {
-            margin-left: 20px;
-        }
-        
-        nav ul li a {
-            color: var(--dark-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        
-        nav ul li a:hover {
-            color: white;
-        }
-        
-        .lang-selector {
-            display: flex;
-            align-items: center;
-        }
-        
-        .lang-btn {
-            background: none;
-            border: 1px solid var(--dark-color);
-            padding: 5px 10px;
-            margin-left: 5px;
-            cursor: pointer;
-            border-radius: 3px;
-            transition: all 0.3s;
-        }
-        
-        .lang-btn:hover, .lang-btn.active {
-            background-color: var(--dark-color);
-            color: white;
-        }
-        
-        .hero {
-            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/api/placeholder/1200/600');
-            background-size: cover;
-            background-position: center;
-            height: 500px;
-            display: flex;
-            align-items: center;
-            text-align: center;
-            color: white;
-        }
-        
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .hero h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .btn {
-            display: inline-block;
-            background-color: var(--primary-color);
-            color: var(--dark-color);
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        
-        .btn:hover {
-            background-color: #e0a800;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        section {
-            padding: 4rem 0;
-        }
-        
-        section h2 {
-            text-align: center;
-            margin-bottom: 2rem;
-            color: var(--secondary-color);
-        }
-        
-        .about-content {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-        
-        .about-text {
-            flex: 1;
-        }
-        
-        .about-image {
-            flex: 1;
-        }
-        
-        .about-image img {
-            width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .species-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .species-card {
-            background-color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-        }
-        
-        .species-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-        
-        .species-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        
-        .species-card-content {
-            padding: 1.5rem;
-        }
-        
-        .species-card h3 {
-            margin-bottom: 1rem;
-            color: var(--secondary-color);
-        }
-        
-        .benefits {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        
-        .benefits-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 2rem;
-        }
-        
-        .benefit-card {
-            text-align: center;
-            padding: 2rem;
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        
-        .benefit-card:hover {
-            background-color: rgba(255,255,255,0.2);
-            transform: translateY(-5px);
-        }
-        
-        .benefit-card i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-        
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1rem;
-        }
-        
-        .gallery-item {
-            overflow: hidden;
-            border-radius: 10px;
-            height: 250px;
-        }
-        
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: all 0.3s;
-        }
-        
-        .gallery-item:hover img {
-            transform: scale(1.1);
-        }
-        
-        .cta {
-            background-color: var(--primary-color);
-            text-align: center;
-        }
-        
-        .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        
-        .social-links a {
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            background-color: var(--dark-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            transition: all 0.3s;
-        }
-        
-        .social-links a:hover {
-            transform: translateY(-5px);
-            background-color: var(--secondary-color);
-        }
-        
-        footer {
-            background-color: var(--dark-color);
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-        }
-        
-        .footer-content {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 2rem;
-        }
-        
-        .footer-section {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .footer-section h3 {
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-        
-        .footer-section ul {
-            list-style: none;
-        }
-        
-        .footer-section ul li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .footer-section ul li a {
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        
-        .footer-section ul li a:hover {
-            color: var(--primary-color);
-        }
-        
-        .copyright {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            nav ul {
-                margin-top: 1rem;
-                justify-content: center;
-            }
-            
-            nav ul li {
-                margin: 0 10px;
-            }
-            
-            .lang-selector {
-                margin-top: 1rem;
-                justify-content: center;
-            }
-            
-            .about-content {
-                flex-direction: column;
-            }
-            
-            .hero h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
+    <!-- CSS -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/responsive.css">
+    <link rel="stylesheet" href="/assets/css/animations.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="container header-content">
-            <div class="logo">
-                <img src="/api/placeholder/50/50" alt="Meliponiculture Logo">
-                <h1>MeliponicBees</h1>
-            </div>
-            <nav>
-                <ul>
-                    <li><a href="#about" class="text-en">About</a></li>
-                    <li><a href="#about" class="text-pt hidden">Sobre</a></li>
-                    <li><a href="#about" class="text-es hidden">Acerca</a></li>
-                    
-                    <li><a href="#species" class="text-en">Bee Species</a></li>
-                    <li><a href="#species" class="text-pt hidden">Espécies</a></li>
-                    <li><a href="#species" class="text-es hidden">Especies</a></li>
-                    
-                    <li><a href="#benefits" class="text-en">Benefits</a></li>
-                    <li><a href="#benefits" class="text-pt hidden">Benefícios</a></li>
-                    <li><a href="#benefits" class="text-es hidden">Beneficios</a></li>
-                    
-                    <li><a href="#gallery" class="text-en">Gallery</a></li>
-                    <li><a href="#gallery" class="text-pt hidden">Galeria</a></li>
-                    <li><a href="#gallery" class="text-es hidden">Galería</a></li>
-                    
-                    <li><a href="#contact" class="text-en">Contact</a></li>
-                    <li><a href="#contact" class="text-pt hidden">Contato</a></li>
-                    <li><a href="#contact" class="text-es hidden">Contacto</a></li>
-                </ul>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="nav-logo">
+                    <img src="/assets/images/icons/econectar-logo.svg" alt="Econectar Logo">
+                    <span class="nav-brand">Econectar</span>
+                </div>
+
+                <div class="nav-links">
+                    <a href="#sobre" class="nav-link">Sobre</a>
+                    <a href="#especies" class="nav-link">Espécies</a>
+                    <a href="#projetos" class="nav-link">Projetos</a>
+                    <a href="#comunidade" class="nav-link">Comunidade</a>
+                    <a href="#contato" class="nav-link">Contato</a>
+                </div>
+
+                <div class="nav-actions">
+                    <button class="lang-btn" data-lang="pt">PT</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="es">ES</button>
+                    <button class="mobile-menu" aria-label="Menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
             </nav>
-            <div class="lang-selector">
-                <button class="lang-btn active" data-lang="en">EN</button>
-                <button class="lang-btn" data-lang="pt">PT</button>
-                <button class="lang-btn" data-lang="es">ES</button>
-            </div>
         </div>
     </header>
 
+    <!-- Hero Section -->
     <section class="hero">
-        <div class="container hero-content">
-            <h1 class="text-en">Discover the World of Stingless Bees</h1>
-            <h1 class="text-pt hidden">Descubra o Mundo das Abelhas sem Ferrão</h1>
-            <h1 class="text-es hidden">Descubre el Mundo de las Abejas sin Aguijón</h1>
-            
-            <p class="text-en">Learn about these fascinating pollinators and their importance for biodiversity and sustainable beekeeping</p>
-            <p class="text-pt hidden">Aprenda sobre esses fascinantes polinizadores e sua importância para a biodiversidade e meliponicultura sustentável</p>
-            <p class="text-es hidden">Aprende sobre estos fascinantes polinizadores y su importancia para la biodiversidad y la meliponicultura sostenible</p>
-            
-            <a href="#about" class="btn text-en">Learn More</a>
-            <a href="#about" class="btn text-pt hidden">Saiba Mais</a>
-            <a href="#about" class="btn text-es hidden">Más Información</a>
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="text-pt">Conectando Pessoas e Abelhas Nativas</span>
+                    <span class="text-en hidden">Connecting People and Native Bees</span>
+                    <span class="text-es hidden">Conectando Personas y Abejas Nativas</span>
+                </h1>
+                <p class="hero-subtitle">
+                    <span class="text-pt">Promovendo a conservação através da meliponicultura sustentável</span>
+                    <span class="text-en hidden">Promoting conservation through sustainable meliponiculture</span>
+                    <span class="text-es hidden">Promoviendo la conservación a través de la meliponicultura sostenible</span>
+                </p>
+                <div class="hero-cta">
+                    <a href="#projetos" class="btn btn-primary">
+                        <span class="text-pt">Conheça Nosso Trabalho</span>
+                        <span class="text-en hidden">Discover Our Work</span>
+                        <span class="text-es hidden">Conoce Nuestro Trabajo</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 
-    <section id="about">
+    <!-- About Section -->
+    <section id="sobre" class="section-about">
         <div class="container">
-            <h2 class="text-en">About Stingless Bees</h2>
-            <h2 class="text-pt hidden">Sobre Abelhas sem Ferrão</h2>
-            <h2 class="text-es hidden">Acerca de las Abejas sin Aguijón</h2>
-            
-            <div class="about-content">
-                <div class="about-text">
-                    <p class="text-en">Stingless bees (Meliponini) are a large group of bees, comprising more than 500 species across tropical and subtropical regions. As their name suggests, these bees lack a functional stinger, making them safe for beekeeping in populated areas.</p>
-                    <p class="text-pt hidden">As abelhas sem ferrão (Meliponini) são um grande grupo de abelhas, compreendendo mais de 500 espécies em regiões tropicais e subtropicais. Como o nome sugere, essas abelhas não possuem ferrão funcional, tornando-as seguras para a criação em áreas povoadas.</p>
-                    <p class="text-es hidden">Las abejas sin aguijón (Meliponini) son un gran grupo de abejas, que comprende más de 500 especies en regiones tropicales y subtropicales. Como su nombre indica, estas abejas carecen de un aguijón funcional, lo que las hace seguras para la apicultura en áreas pobladas.</p>
-                    
-                    <p class="text-en">Meliponiculture is the practice of keeping stingless bees. This ancient technique has been practiced by indigenous cultures for thousands of years, particularly in the Americas, Australia, and Southeast Asia.</p>
-                    <p class="text-pt hidden">A meliponicultura é a prática de criação de abelhas sem ferrão. Esta técnica ancestral tem sido praticada por culturas indígenas há milhares de anos, particularmente nas Américas, Austrália e Sudeste Asiático.</p>
-                    <p class="text-es hidden">La meliponicultura es la práctica de criar abejas sin aguijón. Esta antigua técnica ha sido practicada por culturas indígenas durante miles de años, particularmente en las Américas, Australia y el Sudeste Asiático.</p>
-                    
-                    <p class="text-en">Unlike traditional honeybees, stingless bees are native to many tropical regions and are adapted to local ecosystems, making them crucial pollinators for many native plants and agricultural crops.</p>
-                    <p class="text-pt hidden">Diferente das abelhas melíferas tradicionais, as abelhas sem ferrão são nativas de muitas regiões tropicais e estão adaptadas aos ecossistemas locais, tornando-as polinizadores cruciais para muitas plantas nativas e culturas agrícolas.</p>
-                    <p class="text-es hidden">A diferencia de las abejas melíferas tradicionales, las abejas sin aguijón son nativas de muchas regiones tropicales y están adaptadas a los ecosistemas locales, lo que las convierte en polinizadores cruciales para muchas plantas nativas y cultivos agrícolas.</p>
+            <h2 class="section-title">
+                <span class="text-pt">Sobre a Econectar</span>
+                <span class="text-en hidden">About Econectar</span>
+                <span class="text-es hidden">Sobre Econectar</span>
+            </h2>
+            <div class="about-grid">
+                <div class="about-content">
+                    <p class="text-pt">
+                        A Econectar é uma iniciativa dedicada à conservação das abelhas nativas e ao 
+                        desenvolvimento sustentável através da meliponicultura. Trabalhamos com 
+                        comunidades locais para preservar espécies ameaçadas e promover práticas 
+                        sustentáveis de manejo.
+                    </p>
+                    <p class="text-en hidden">
+                        Econectar is an initiative dedicated to native bee conservation and 
+                        sustainable development through meliponiculture. We work with local 
+                        communities to preserve endangered species and promote sustainable 
+                        management practices.
+                    </p>
+                    <p class="text-es hidden">
+                        Econectar es una iniciativa dedicada a la conservación de las abejas nativas 
+                        y al desarrollo sostenible a través de la meliponicultura. Trabajamos con 
+                        comunidades locales para preservar especies amenazadas y promover prácticas 
+                        sostenibles de manejo.
+                    </p>
                 </div>
                 <div class="about-image">
-                    <img src="/api/placeholder/500/300" alt="Stingless bee on flower">
+                    <img src="/assets/images/about/about-econectar.jpg" 
+                         alt="Meliponicultura sustentável"
+                         loading="lazy">
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="species">
+ <!-- Species Section -->
+    <section id="especies" class="section-species">
         <div class="container">
-            <h2 class="text-en">Common Stingless Bee Species</h2>
-            <h2 class="text-pt hidden">Espécies Comuns de Abelhas sem Ferrão</h2>
-            <h2 class="text-es hidden">Especies Comunes de Abejas sin Aguijón</h2>
-            
-            <div class="species-cards">
-                <div class="species-card">
-                    <img src="/api/placeholder/300/200" alt="Tetragonisca angustula">
-                    <div class="species-card-content">
-                        <h3>Tetragonisca angustula</h3>
-                        <p class="text-en">Commonly known as Jataí, this tiny bee is one of the most popular species for beginners in meliponiculture due to its docile nature and adaptability.</p>
-                        <p class="text-pt hidden">Comumente conhecida como Jataí, essa pequena abelha é uma das espécies mais populares para iniciantes na meliponicultura devido à sua natureza dócil e adaptabilidade.</p>
-                        <p class="text-es hidden">Comúnmente conocida como Jataí, esta pequeña abeja es una de las especies más populares para principiantes en meliponicultura debido a su naturaleza dócil y adaptabilidad.</p>
+            <h2 class="section-title">
+                <span class="text-pt">Espécies de Abelhas Nativas</span>
+                <span class="text-en hidden">Native Bee Species</span>
+                <span class="text-es hidden">Especies de Abejas Nativas</span>
+            </h2>
+
+            <div class="species-filters">
+                <button class="filter-btn active" data-filter="all">
+                    <span class="text-pt">Todas</span>
+                    <span class="text-en hidden">All</span>
+                    <span class="text-es hidden">Todas</span>
+                </button>
+                <button class="filter-btn" data-filter="melipona">Melipona</button>
+                <button class="filter-btn" data-filter="trigona">Trigona</button>
+                <button class="filter-btn" data-filter="tetragonisca">Tetragonisca</button>
+            </div>
+
+            <div class="species-grid">
+                <!-- Melipona Species -->
+                <div class="species-card" data-species="melipona">
+                    <div class="species-image">
+                        <img src="/assets/images/species/mandacaia.jpg" 
+                             alt="Melipona quadrifasciata"
+                             loading="lazy">
                     </div>
-                </div>
-                
-                <div class="species-card">
-                    <img src="/api/placeholder/300/200" alt="Melipona quadrifasciata">
-                    <div class="species-card-content">
+                    <div class="species-info">
                         <h3>Melipona quadrifasciata</h3>
-                        <p class="text-en">Known as Mandaçaia, this bee produces highly prized honey and is native to Brazil's Atlantic Forest region.</p>
-                        <p class="text-pt hidden">Conhecida como Mandaçaia, essa abelha produz mel altamente valorizado e é nativa da região da Mata Atlântica do Brasil.</p>
-                        <p class="text-es hidden">Conocida como Mandaçaia, esta abeja produce miel muy apreciada y es nativa de la región de la Mata Atlántica de Brasil.</p>
+                        <p class="species-common-name">
+                            <span class="text-pt">Mandaçaia</span>
+                            <span class="text-en hidden">Mandaçaia Bee</span>
+                            <span class="text-es hidden">Abeja Mandaçaia</span>
+                        </p>
+                        <div class="species-details">
+                            <div class="detail-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span class="text-pt">Mata Atlântica</span>
+                                <span class="text-en hidden">Atlantic Forest</span>
+                                <span class="text-es hidden">Mata Atlántica</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-temperature-high"></i>
+                                <span>18-28°C</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-honey-pot"></i>
+                                <span class="text-pt">Produção: Alta</span>
+                                <span class="text-en hidden">Production: High</span>
+                                <span class="text-es hidden">Producción: Alta</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="species-card">
-                    <img src="/api/placeholder/300/200" alt="Scaptotrigona postica">
-                    <div class="species-card-content">
-                        <h3>Scaptotrigona postica</h3>
-                        <p class="text-en">Called Tubi in Brazil, this species is known for its high productivity and defensive behavior, making it an interesting choice for experienced meliponiculturists.</p>
-                        <p class="text-pt hidden">Chamada de Tubi no Brasil, esta espécie é conhecida por sua alta produtividade e comportamento defensivo, tornando-a uma escolha interessante para meliponicultores experientes.</p>
-                        <p class="text-es hidden">Llamada Tubi en Brasil, esta especie es conocida por su alta productividad y comportamiento defensivo, lo que la convierte en una opción interesante para meliponicultores experimentados.</p>
+
+                <!-- Tetragonisca Species -->
+                <div class="species-card" data-species="tetragonisca">
+                    <div class="species-image">
+                        <img src="/assets/images/species/jatai.jpg" 
+                             alt="Tetragonisca angustula"
+                             loading="lazy">
+                    </div>
+                    <div class="species-info">
+                        <h3>Tetragonisca angustula</h3>
+                        <p class="species-common-name">
+                            <span class="text-pt">Jataí</span>
+                            <span class="text-en hidden">Jataí Bee</span>
+                            <span class="text-es hidden">Abeja Jataí</span>
+                        </p>
+                        <div class="species-details">
+                            <div class="detail-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span class="text-pt">América Tropical</span>
+                                <span class="text-en hidden">Tropical America</span>
+                                <span class="text-es hidden">América Tropical</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-temperature-high"></i>
+                                <span>20-30°C</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-honey-pot"></i>
+                                <span class="text-pt">Produção: Média</span>
+                                <span class="text-en hidden">Production: Medium</span>
+                                <span class="text-es hidden">Producción: Media</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trigona Species -->
+                <div class="species-card" data-species="trigona">
+                    <div class="species-image">
+                        <img src="/assets/images/species/borá.jpg" 
+                             alt="Trigona spinipes"
+                             loading="lazy">
+                    </div>
+                    <div class="species-info">
+                        <h3>Trigona spinipes</h3>
+                        <p class="species-common-name">
+                            <span class="text-pt">Arapuá</span>
+                            <span class="text-en hidden">Arapuá Bee</span>
+                            <span class="text-es hidden">Abeja Arapuá</span>
+                        </p>
+                        <div class="species-details">
+                            <div class="detail-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span class="text-pt">América do Sul</span>
+                                <span class="text-en hidden">South America</span>
+                                <span class="text-es hidden">América del Sur</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-temperature-high"></i>
+                                <span>22-32°C</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-honey-pot"></i>
+                                <span class="text-pt">Produção: Média-Alta</span>
+                                <span class="text-en hidden">Production: Medium-High</span>
+                                <span class="text-es hidden">Producción: Media-Alta</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <div class="species-info-box">
+                <div class="info-content">
+                    <i class="fas fa-info-circle"></i>
+                    <p class="text-pt">
+                        Existem mais de 400 espécies de abelhas sem ferrão no Brasil. 
+                        Aqui apresentamos algumas das espécies mais comuns na meliponicultura.
+                    </p>
+                    <p class="text-en hidden">
+                        There are over 400 species of stingless bees in Brazil. 
+                        Here we present some of the most common species in meliponiculture.
+                    </p>
+                    <p class="text-es hidden">
+                        Existen más de 400 especies de abejas sin aguijón en Brasil. 
+                        Aquí presentamos algunas de las especies más comunes en la meliponicultura.
+                    </p>
+                </div>
+                <a href="#" class="btn btn-secondary">
+                    <span class="text-pt">Ver Todas as Espécies</span>
+                    <span class="text-en hidden">View All Species</span>
+                    <span class="text-es hidden">Ver Todas las Especies</span>
+                </a>
+            </div>
         </div>
     </section>
 
-    <section id="benefits" class="benefits">
+    <!-- Projects Section -->
+    <section id="projetos" class="section-projects">
         <div class="container">
-            <h2 class="text-en">Benefits of Meliponiculture</h2>
-            <h2 class="text-pt hidden">Benefícios da Meliponicultura</h2>
-            <h2 class="text-es hidden">Beneficios de la Meliponicultura</h2>
-            
-            <div class="benefits-content">
-                <div class="benefit-card">
-                    <i class="fas fa-leaf"></i>
-                    <h3 class="text-en">Ecological</h3>
-                    <h3 class="text-pt hidden">Ecológico</h3>
-                    <h3 class="text-es hidden">Ecológico</h3>
-                    <p class="text-en">Helps conserve native bee species and supports local biodiversity through natural pollination.</p>
-                    <p class="text-pt hidden">Ajuda a conservar espécies nativas de abelhas e apoia a biodiversidade local através da polinização natural.</p>
-                    <p class="text-es hidden">Ayuda a conservar especies nativas de abejas y apoya la biodiversidad local a través de la polinización natural.</p>
+            <h2 class="section-title">
+                <span class="text-pt">Nossos Projetos</span>
+                <span class="text-en hidden">Our Projects</span>
+                <span class="text-es hidden">Nuestros Proyectos</span>
+            </h2>
+
+            <div class="projects-grid">
+                <!-- Conservation Project -->
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="/assets/images/projects/conservation.jpg" 
+                             alt="Projeto de Conservação"
+                             loading="lazy">
+                        <div class="project-tag">
+                            <span class="text-pt">Conservação</span>
+                            <span class="text-en hidden">Conservation</span>
+                            <span class="text-es hidden">Conservación</span>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3>
+                            <span class="text-pt">Conservação de Espécies</span>
+                            <span class="text-en hidden">Species Conservation</span>
+                            <span class="text-es hidden">Conservación de Especies</span>
+                        </h3>
+                        <p class="text-pt">
+                            Trabalhamos na identificação, mapeamento e conservação de espécies 
+                            nativas de abelhas sem ferrão em diferentes biomas brasileiros.
+                        </p>
+                        <p class="text-en hidden">
+                            We work on identifying, mapping, and conserving native stingless 
+                            bee species across different Brazilian biomes.
+                        </p>
+                        <p class="text-es hidden">
+                            Trabajamos en la identificación, mapeo y conservación de especies 
+                            nativas de abejas sin aguijón en diferentes biomas brasileños.
+                        </p>
+                        <div class="project-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">50+</span>
+                                <span class="stat-label text-pt">Espécies Protegidas</span>
+                                <span class="stat-label text-en hidden">Protected Species</span>
+                                <span class="stat-label text-es hidden">Especies Protegidas</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">10</span>
+                                <span class="stat-label text-pt">Biomas</span>
+                                <span class="stat-label text-en hidden">Biomes</span>
+                                <span class="stat-label text-es hidden">Biomas</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="benefit-card">
-                    <i class="fas fa-tint"></i>
-                    <h3 class="text-en">Medicinal Honey</h3>
-                    <h3 class="text-pt hidden">Mel Medicinal</h3>
-                    <h3 class="text-es hidden">Miel Medicinal</h3>
-                    <p class="text-en">Stingless bee honey has unique properties and is used in traditional medicine across many cultures.</p>
-                    <p class="text-pt hidden">O mel de abelhas sem ferrão tem propriedades únicas e é usado na medicina tradicional em várias culturas.</p>
-                    <p class="text-es hidden">La miel de abejas sin aguijón tiene propiedades únicas y se utiliza en la medicina tradicional en muchas culturas.</p>
+
+                <!-- Education Project -->
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="/assets/images/projects/education.jpg" 
+                             alt="Projeto Educacional"
+                             loading="lazy">
+                        <div class="project-tag">
+                            <span class="text-pt">Educação</span>
+                            <span class="text-en hidden">Education</span>
+                            <span class="text-es hidden">Educación</span>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3>
+                            <span class="text-pt">Educação Ambiental</span>
+                            <span class="text-en hidden">Environmental Education</span>
+                            <span class="text-es hidden">Educación Ambiental</span>
+                        </h3>
+                        <p class="text-pt">
+                            Desenvolvemos programas educacionais para escolas e comunidades, 
+                            promovendo a conscientização sobre a importância das abelhas nativas.
+                        </p>
+                        <p class="text-en hidden">
+                            We develop educational programs for schools and communities, 
+                            promoting awareness about the importance of native bees.
+                        </p>
+                        <p class="text-es hidden">
+                            Desarrollamos programas educativos para escuelas y comunidades, 
+                            promoviendo la concientización sobre la importancia de las abejas nativas.
+                        </p>
+                        <div class="project-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">1000+</span>
+                                <span class="stat-label text-pt">Alunos Alcançados</span>
+                                <span class="stat-label text-en hidden">Students Reached</span>
+                                <span class="stat-label text-es hidden">Alumnos Alcanzados</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">30</span>
+                                <span class="stat-label text-pt">Escolas Parceiras</span>
+                                <span class="stat-label text-en hidden">Partner Schools</span>
+                                <span class="stat-label text-es hidden">Escuelas Asociadas</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="benefit-card">
-                    <i class="fas fa-hands-helping"></i>
-                    <h3 class="text-en">Community Development</h3>
-                    <h3 class="text-pt hidden">Desenvolvimento Comunitário</h3>
-                    <h3 class="text-es hidden">Desarrollo Comunitario</h3>
-                    <p class="text-en">Provides sustainable income for rural communities without requiring large investments.</p>
-                    <p class="text-pt hidden">Proporciona renda sustentável para comunidades rurais sem exigir grandes investimentos.</p>
-                    <p class="text-es hidden">Proporciona ingresos sostenibles para comunidades rurales sin requerir grandes inversiones.</p>
+
+                <!-- Community Project -->
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="/assets/images/projects/community.jpg" 
+                             alt="Projeto Comunitário"
+                             loading="lazy">
+                        <div class="project-tag">
+                            <span class="text-pt">Comunidade</span>
+                            <span class="text-en hidden">Community</span>
+                            <span class="text-es hidden">Comunidad</span>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3>
+                            <span class="text-pt">Desenvolvimento Comunitário</span>
+                            <span class="text-en hidden">Community Development</span>
+                            <span class="text-es hidden">Desarrollo Comunitario</span>
+                        </h3>
+                        <p class="text-pt">
+                            Apoiamos meliponicultores locais com treinamento, recursos e 
+                            conexão com mercados para produtos sustentáveis.
+                        </p>
+                        <p class="text-en hidden">
+                            We support local meliponiculturists with training, resources, 
+                            and market connections for sustainable products.
+                        </p>
+                        <p class="text-es hidden">
+                            Apoyamos a meliponicultores locales con capacitación, recursos 
+                            y conexiones de mercado para productos sostenibles.
+                        </p>
+                        <div class="project-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">200+</span>
+                                <span class="stat-label text-pt">Famílias Beneficiadas</span>
+                                <span class="stat-label text-en hidden">Families Benefited</span>
+                                <span class="stat-label text-es hidden">Familias Beneficiadas</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">15</span>
+                                <span class="stat-label text-pt">Comunidades</span>
+                                <span class="stat-label text-en hidden">Communities</span>
+                                <span class="stat-label text-es hidden">Comunidades</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="benefit-card">
-                    <i class="fas fa-seedling"></i>
-                    <h3 class="text-en">Agricultural Productivity</h3>
-                    <h3 class="text-pt hidden">Produtividade Agrícola</h3>
-                    <h3 class="text-es hidden">Productividad Agrícola</h3>
-                    <p class="text-en">Improves crop yields through effective pollination, especially for native fruit trees.</p>
-                    <p class="text-pt hidden">Melhora o rendimento das colheitas através de polinização eficaz, especialmente para árvores frutíferas nativas.</p>
-                    <p class="text-es hidden">Mejora el rendimiento de los cultivos a través de una polinización eficaz, especialmente para árboles frutales nativos.</p>
+            </div>
+
+            <!-- Project CTA -->
+            <div class="project-cta">
+                <h3>
+                    <span class="text-pt">Quer participar dos nossos projetos?</span>
+                    <span class="text-en hidden">Want to participate in our projects?</span>
+                    <span class="text-es hidden">¿Quieres participar en nuestros proyectos?</span>
+                </h3>
+                <a href="#contato" class="btn btn-primary">
+                    <span class="text-pt">Entre em Contato</span>
+                    <span class="text-en hidden">Contact Us</span>
+                    <span class="text-es hidden">Contáctanos</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community Section -->
+    <section id="comunidade" class="section-community">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="text-pt">Comunidade Econectar</span>
+                <span class="text-en hidden">Econectar Community</span>
+                <span class="text-es hidden">Comunidad Econectar</span>
+            </h2>
+
+            <!-- Community Stats -->
+            <div class="community-stats">
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <span class="stat-number">5,000+</span>
+                    <span class="stat-label text-pt">Meliponicultores</span>
+                    <span class="stat-label text-en hidden">Beekeepers</span>
+                    <span class="stat-label text-es hidden">Meliponicultores</span>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span class="stat-number">150+</span>
+                    <span class="stat-label text-pt">Cidades</span>
+                    <span class="stat-label text-en hidden">Cities</span>
+                    <span class="stat-label text-es hidden">Ciudades</span>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-handshake"></i>
+                    <span class="stat-number">50+</span>
+                    <span class="stat-label text-pt">Parcerias</span>
+                    <span class="stat-label text-en hidden">Partnerships</span>
+                    <span class="stat-label text-es hidden">Alianzas</span>
+                </div>
+            </div>
+
+            <!-- Community Feed -->
+            <div class="community-feed">
+                <div class="feed-header">
+                    <h3>
+                        <span class="text-pt">Histórias da Nossa Comunidade</span>
+                        <span class="text-en hidden">Community Stories</span>
+                        <span class="text-es hidden">Historias de Nuestra Comunidad</span>
+                    </h3>
+                </div>
+
+                <!-- Community Posts -->
+                <div class="community-posts">
+                    <!-- Post 1 -->
+                    <div class="community-post">
+                        <div class="post-header">
+                            <img src="/assets/images/community/profile1.jpg" alt="João Silva" class="profile-img">
+                            <div class="post-info">
+                                <h4>João Silva</h4>
+                                <span class="post-location">Ribeirão Preto, SP</span>
+                            </div>
+                        </div>
+                        <div class="post-image">
+                            <img src="/assets/images/community/post1.jpg" alt="Colmeia de Mandaçaia" loading="lazy">
+                        </div>
+                        <div class="post-content">
+                            <p class="text-pt">
+                                Primeira divisão de colmeia de Mandaçaia bem sucedida! Gratidão ao grupo 
+                                Econectar pelo suporte e conhecimento compartilhado. 🐝
+                            </p>
+                            <p class="text-en hidden">
+                                First successful Mandaçaia hive division! Grateful to the Econectar group 
+                                for their support and shared knowledge. 🐝
+                            </p>
+                            <p class="text-es hidden">
+                                ¡Primera división exitosa de colmena de Mandaçaia! Agradecido al grupo 
+                                Econectar por su apoyo y conocimiento compartido. 🐝
+                            </p>
+                        </div>
+                        <div class="post-actions">
+                            <button class="action-btn like-btn">
+                                <i class="far fa-heart"></i>
+                                <span>45</span>
+                            </button>
+                            <button class="action-btn comment-btn">
+                                <i class="far fa-comment"></i>
+                                <span>12</span>
+                            </button>
+                            <button class="action-btn share-btn">
+                                <i class="far fa-share-square"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Post 2 -->
+                    <div class="community-post">
+                        <div class="post-header">
+                            <img src="/assets/images/community/profile2.jpg" alt="Maria Santos" class="profile-img">
+                            <div class="post-info">
+                                <h4>Maria Santos</h4>
+                                <span class="post-location">Salvador, BA</span>
+                            </div>
+                        </div>
+                        <div class="post-image">
+                            <img src="/assets/images/community/post2.jpg" alt="Workshop de Meliponicultura" loading="lazy">
+                        </div>
+                        <div class="post-content">
+                            <p class="text-pt">
+                                Workshop incrível hoje com a comunidade local! Compartilhando conhecimento 
+                                sobre criação de abelhas nativas e conservação. 🌿
+                            </p>
+                            <p class="text-en hidden">
+                                Amazing workshop today with the local community! Sharing knowledge about 
+                                native bee keeping and conservation. 🌿
+                            </p>
+                            <p class="text-es hidden">
+                                ¡Increíble taller hoy con la comunidad local! Compartiendo conocimiento 
+                                sobre cría de abejas nativas y conservación. 🌿
+                            </p>
+                        </div>
+                        <div class="post-actions">
+                            <button class="action-btn like-btn">
+                                <i class="far fa-heart"></i>
+                                <span>38</span>
+                            </button>
+                            <button class="action-btn comment-btn">
+                                <i class="far fa-comment"></i>
+                                <span>8</span>
+                            </button>
+                            <button class="action-btn share-btn">
+                                <i class="far fa-share-square"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Community Join -->
+                <div class="community-join">
+                    <div class="join-content">
+                        <h3>
+                            <span class="text-pt">Faça Parte da Nossa Comunidade</span>
+                            <span class="text-en hidden">Join Our Community</span>
+                            <span class="text-es hidden">Únete a Nuestra Comunidad</span>
+                        </h3>
+                        <p class="text-pt">
+                            Conecte-se com outros meliponicultores, compartilhe experiências e 
+                            aprenda mais sobre abelhas nativas.
+                        </p>
+                        <p class="text-en hidden">
+                            Connect with other meliponiculturists, share experiences and 
+                            learn more about native bees.
+                        </p>
+                        <p class="text-es hidden">
+                            Conéctate con otros meliponicultores, comparte experiencias y 
+                            aprende más sobre abejas nativas.
+                        </p>
+                        <button class="btn btn-primary">
+                            <span class="text-pt">Participar Agora</span>
+                            <span class="text-en hidden">Join Now</span>
+                            <span class="text-es hidden">Unirse Ahora</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Community Events -->
+            <div class="community-events">
+                <h3>
+                    <span class="text-pt">Próximos Eventos</span>
+                    <span class="text-en hidden">Upcoming Events</span>
+                    <span class="text-es hidden">Próximos Eventos</span>
+                </h3>
+                <div class="events-grid">
+                    <div class="event-card">
+                        <div class="event-date">
+                            <span class="date">15</span>
+                            <span class="month">JUN</span>
+                        </div>
+                        <div class="event-details">
+                            <h4>Workshop: Manejo de Colmeias</h4>
+                            <p><i class="fas fa-map-marker-alt"></i> São Paulo, SP</p>
+                            <p><i class="far fa-clock"></i> 09:00 - 17:00</p>
+                        </div>
+                        <button class="btn btn-secondary">
+                            <span class="text-pt">Inscrever-se</span>
+                            <span class="text-en hidden">Register</span>
+                            <span class="text-es hidden">Inscribirse</span>
+                        </button>
+                    </div>
+                    <!-- Add more event cards as needed -->
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="gallery">
+    <!-- Contact Section -->
+    <section id="contato" class="section-contact">
         <div class="container">
-            <h2 class="text-en">Gallery</h2>
-            <h2 class="text-pt hidden">Galeria</h2>
-            <h2 class="text-es hidden">Galería</h2>
-            
-            <div class="gallery">
-                <div class="gallery-item">
-                    <img src="/api/placeholder/300/300" alt="Stingless bee hive">
+            <h2 class="section-title">
+                <span class="text-pt">Entre em Contato</span>
+                <span class="text-en hidden">Contact Us</span>
+                <span class="text-es hidden">Contáctanos</span>
+            </h2>
+
+            <div class="contact-grid">
+                <!-- Contact Information -->
+                <div class="contact-info">
+                    <h3>
+                        <span class="text-pt">Informações de Contato</span>
+                        <span class="text-en hidden">Contact Information</span>
+                        <span class="text-es hidden">Información de Contacto</span>
+                    </h3>
+                    
+                    <div class="info-items">
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <h4>
+                                    <span class="text-pt">Endereço</span>
+                                    <span class="text-en hidden">Address</span>
+                                    <span class="text-es hidden">Dirección</span>
+                                </h4>
+                                <p>Rua das Abelhas, 123</p>
+                                <p>São Paulo - SP, Brasil</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <div>
+                                <h4>
+                                    <span class="text-pt">Telefone</span>
+                                    <span class="text-en hidden">Phone</span>
+                                    <span class="text-es hidden">Teléfono</span>
+                                </h4>
+                                <p>+55 (11) 1234-5678</p>
+                                <p>+55 (11) 9876-5432</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <h4>Email</h4>
+                                <p>contato@econectar.com</p>
+                                <p>info@econectar.com</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <h4>
+                                    <span class="text-pt">Horário</span>
+                                    <span class="text-en hidden">Hours</span>
+                                    <span class="text-es hidden">Horario</span>
+                                </h4>
+                                <p>
+                                    <span class="text-pt">Segunda a Sexta: 9h - 18h</span>
+                                    <span class="text-en hidden">Monday to Friday: 9AM - 6PM</span>
+                                    <span class="text-es hidden">Lunes a Viernes: 9h - 18h</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Media -->
+                    <div class="social-links">
+                        <h4>
+                            <span class="text-pt">Siga-nos</span>
+                            <span class="text-en hidden">Follow Us</span>
+                            <span class="text-es hidden">Síguenos</span>
+                        </h4>
+                        <div class="social-icons">
+                            <a href="https://instagram.com/econectar" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="https://facebook.com/econectar" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="https://youtube.com/econectar" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                            <a href="https://linkedin.com/company/econectar" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="gallery-item">
-                    <img src="/api/placeholder/300/300" alt="Stingless bee on flower">
-                </div>
-                <div class="gallery-item">
-                    <img src="/api/placeholder/300/300" alt="Stingless bee honey harvest">
-                </div>
-                <div class="gallery-item">
-                    <img src="/api/placeholder/300/300" alt="Meliponiculture workshop">
-                </div>
-                <div class="gallery-item">
-                    <img src="/api/placeholder/300/300" alt="Traditional hive designs">
-                </div>
-                <div class="gallery-item">
-                    <img src="/api/placeholder/300/300" alt="Stingless bee entrance">
+
+                <!-- Contact Form -->
+                <div class="contact-form">
+                    <h3>
+                        <span class="text-pt">Envie sua Mensagem</span>
+                        <span class="text-en hidden">Send us a Message</span>
+                        <span class="text-es hidden">Envíanos un Mensaje</span>
+                    </h3>
+                    
+                    <form id="contactForm" action="/api/contact" method="POST">
+                        <div class="form-group">
+                            <label for="name">
+                                <span class="text-pt">Nome</span>
+                                <span class="text-en hidden">Name</span>
+                                <span class="text-es hidden">Nombre</span>
+                            </label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">
+                                <span class="text-pt">Assunto</span>
+                                <span class="text-en hidden">Subject</span>
+                                <span class="text-es hidden">Asunto</span>
+                            </label>
+                            <select id="subject" name="subject" required>
+                                <option value="" disabled selected>
+                                    <span class="text-pt">Selecione um assunto</span>
+                                    <span class="text-en hidden">Select a subject</span>
+                                    <span class="text-es hidden">Selecciona un asunto</span>
+                                </option>
+                                <option value="partnership">
+                                    <span class="text-pt">Parceria</span>
+                                    <span class="text-en hidden">Partnership</span>
+                                    <span class="text-es hidden">Asociación</span>
+                                </option>
+                                <option value="support">
+                                    <span class="text-pt">Suporte Técnico</span>
+                                    <span class="text-en hidden">Technical Support</span>
+                                    <span class="text-es hidden">Soporte Técnico</span>
+                                </option>
+                                <option value="general">
+                                    <span class="text-pt">Informações Gerais</span>
+                                    <span class="text-en hidden">General Information</span>
+                                    <span class="text-es hidden">Información General</span>
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">
+                                <span class="text-pt">Mensagem</span>
+                                <span class="text-en hidden">Message</span>
+                                <span class="text-es hidden">Mensaje</span>
+                            </label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <span class="text-pt">Enviar Mensagem</span>
+                            <span class="text-en hidden">Send Message</span>
+                            <span class="text-es hidden">Enviar Mensaje</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="contact" class="cta">
+    <!-- Footer Section -->
+    <footer class="footer">
         <div class="container">
-            <h2 class="text-en">Join Our Community</h2>
-            <h2 class="text-pt hidden">Junte-se à Nossa Comunidade</h2>
-            <h2 class="text-es hidden">Únete a Nuestra Comunidad</h2>
-            
-            <p class="text-en">Connect with other meliponiculturists, share experiences, and learn together!</p>
-            <p class="text-pt hidden">Conecte-se com outros meliponicultores, compartilhe experiências e aprenda junto!</p>
-            <p class="text-es hidden">¡Conéctate con otros meliponicultores, comparte experiencias y aprende junto!</p>
-            
-            <div class="social-links">
-                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-                <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="container">
+            <!-- Footer Main Content -->
             <div class="footer-content">
-                <div class="footer-section">
-                    <h3 class="text-en">Quick Links</h3>
-                    <h3 class="text-pt hidden">Links Rápidos</h3>
-                    <h3 class="text-es hidden">Enlaces Rápidos</h3>
+                <!-- Brand Column -->
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <img src="/assets/images/icons/econectar-logo-white.svg" alt="Econectar Logo">
+                        <h3>Econectar</h3>
+                    </div>
+                    <p class="text-pt">
+                        Conectando pessoas e abelhas nativas através da meliponicultura sustentável.
+                    </p>
+                    <p class="text-en hidden">
+                        Connecting people and native bees through sustainable meliponiculture.
+                    </p>
+                    <p class="text-es hidden">
+                        Conectando personas y abejas nativas a través de la meliponicultura sostenible.
+                    </p>
+                    <div class="footer-social">
+                        <a href="https://instagram.com/econectar" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://facebook.com/econectar" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://youtube.com/econectar" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        <a href="https://linkedin.com/company/econectar" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="footer-links">
+                    <h4>
+                        <span class="text-pt">Links Rápidos</span>
+                        <span class="text-en hidden">Quick Links</span>
+                        <span class="text-es hidden">Enlaces Rápidos</span>
+                    </h4>
                     <ul>
-                        <li><a href="#about" class="text-en">About</a></li>
-                        <li><a href="#about" class="text-pt hidden">Sobre</a></li>
-                        <li><a href="#about" class="text-es hidden">Acerca de</a></li>
-                        
-                        <li><a href="#species" class="text-en">Bee Species</a></li>
-                        <li><a href="#species" class="text-pt hidden">Espécies de Abelhas</a></li>
-                        <li><a href="#species" class="text-es hidden">Especies de Abejas</a></li>
-                        
-                        <li><a href="#benefits" class="text-en">Benefits</a></li>
-                        <li><a href="#benefits" class="text-pt hidden">Benefícios</a></li>
-                        <li><a href="#benefits" class="text-es hidden">Beneficios</a></li>
-                        
-                        <li><a href="#gallery" class="text-en">Gallery</a></li>
-                        <li><a href="#gallery" class="text-pt hidden">Galeria</a></li>
-                        <li><a href="#gallery" class="text-es hidden">Galería</a></li>
+                        <li>
+                            <a href="#sobre">
+                                <span class="text-pt">Sobre</span>
+                                <span class="text-en hidden">About</span>
+                                <span class="text-es hidden">Acerca</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#especies">
+                                <span class="text-pt">Espécies</span>
+                                <span class="text-en hidden">Species</span>
+                                <span class="text-es hidden">Especies</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#projetos">
+                                <span class="text-pt">Projetos</span>
+                                <span class="text-en hidden">Projects</span>
+                                <span class="text-es hidden">Proyectos</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#comunidade">
+                                <span class="text-pt">Comunidade</span>
+                                <span class="text-en hidden">Community</span>
+                                <span class="text-es hidden">Comunidad</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
-                
-                <div class="footer-section">
-                    <h3 class="text-en">Resources</h3>
-                    <h3 class="text-pt hidden">Recursos</h3>
-                    <h3 class="text-es hidden">Recursos</h3>
+
+                <!-- Resources -->
+                <div class="footer-resources">
+                    <h4>
+                        <span class="text-pt">Recursos</span>
+                        <span class="text-en hidden">Resources</span>
+                        <span class="text-es hidden">Recursos</span>
+                    </h4>
                     <ul>
-                        <li><a href="#" class="text-en">Starter Guide</a></li>
-                        <li><a href="#" class="text-pt hidden">Guia para Iniciantes</a></li>
-                        <li><a href="#" class="text-es hidden">Guía para Principiantes</a></li>
-                        
-                        <li><a href="#" class="text-en">Hive Designs</a></li>
-                        <li><a href="#" class="text-pt hidden">Modelos de Colmeias</a></li>
-                        <li><a href="#" class="text-es hidden">Diseños de Colmenas                        <li><a href="#" class="text-es hidden">Diseños de Colmenas</a></li>
-                        
-                        <li><a href="#" class="text-en">Best Practices</a></li>
-                        <li><a href="#" class="text-pt hidden">Boas Práticas</a></li>
-                        <li><a href="#" class="text-es hidden">Buenas Prácticas</a></li>
+                        <li>
+                            <a href="/blog">
+                                <span class="text-pt">Blog</span>
+                                <span class="text-en hidden">Blog</span>
+                                <span class="text-es hidden">Blog</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/guias">
+                                <span class="text-pt">Guias</span>
+                                <span class="text-en hidden">Guides</span>
+                                <span class="text-es hidden">Guías</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/pesquisa">
+                                <span class="text-pt">Pesquisa</span>
+                                <span class="text-en hidden">Research</span>
+                                <span class="text-es hidden">Investigación</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/downloads">
+                                <span class="text-pt">Downloads</span>
+                                <span class="text-en hidden">Downloads</span>
+                                <span class="text-es hidden">Descargas</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
-                
-                <div class="footer-section">
-                    <h3 class="text-en">Contact</h3>
-                    <h3 class="text-pt hidden">Contato</h3>
-                    <h3 class="text-es hidden">Contacto</h3>
-                    <ul>
-                        <li>Email: info@meliponicbees.com</li>
-                        <li class="text-en">Phone: +1 234 567 890</li>
-                        <li class="text-pt hidden">Telefone: +1 234 567 890</li>
-                        <li class="text-es hidden">Teléfono: +1 234 567 890</li>
-                    </ul>
+
+                <!-- Newsletter -->
+                <div class="footer-newsletter">
+                    <h4>
+                        <span class="text-pt">Fique por Dentro</span>
+                        <span class="text-en hidden">Stay Updated</span>
+                        <span class="text-es hidden">Mantente Actualizado</span>
+                    </h4>
+                    <p class="text-pt">
+                        Receba novidades sobre meliponicultura e nossos projetos.
+                    </p>
+                    <p class="text-en hidden">
+                        Get updates about meliponiculture and our projects.
+                    </p>
+                    <p class="text-es hidden">
+                        Recibe novedades sobre meliponicultura y nuestros proyectos.
+                    </p>
+                    <form class="newsletter-form" action="/api/newsletter" method="POST">
+                        <input type="email" name="email" placeholder="Email" required>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="text-pt">Inscrever</span>
+                            <span class="text-en hidden">Subscribe</span>
+                            <span class="text-es hidden">Suscribir</span>
+                        </button>
+                    </form>
                 </div>
             </div>
-            
-            <div class="copyright">
-                <p>&copy; 2024 MeliponicBees. <span class="text-en">All rights reserved.</span><span class="text-pt hidden">Todos os direitos reservados.</span><span class="text-es hidden">Todos los derechos reservados.</span></p>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <div class="footer-legal">
+                    <p>&copy; 2024 Econectar. 
+                        <span class="text-pt">Todos os direitos reservados.</span>
+                        <span class="text-en hidden">All rights reserved.</span>
+                        <span class="text-es hidden">Todos los derechos reservados.</span>
+                    </p>
+                    <div class="legal-links">
+                        <a href="/privacidade">
+                            <span class="text-pt">Política de Privacidade</span>
+                            <span class="text-en hidden">Privacy Policy</span>
+                            <span class="text-es hidden">Política de Privacidad</span>
+                        </a>
+                        <span class="separator">|</span>
+                        <a href="/termos">
+                            <span class="text-pt">Termos de Uso</span>
+                            <span class="text-en hidden">Terms of Use</span>
+                            <span class="text-es hidden">Términos de Uso</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>
 
-    <script>
-        // Language switching functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const langButtons = document.querySelectorAll('.lang-btn');
-            
-            function setLanguage(lang) {
-                // Hide all language elements
-                document.querySelectorAll('[class*="text-"]').forEach(el => {
-                    el.classList.add('hidden');
-                });
-                
-                // Show selected language elements
-                document.querySelectorAll(`.text-${lang}`).forEach(el => {
-                    el.classList.remove('hidden');
-                });
-                
-                // Update active state of language buttons
-                langButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.lang === lang) {
-                        btn.classList.add('active');
-                    }
-                });
-                
-                // Store language preference
-                localStorage.setItem('preferred-language', lang);
-            }
-            
-            // Language button click handlers
-            langButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    setLanguage(btn.dataset.lang);
-                });
-            });
-            
-            // Set initial language
-            const savedLang = localStorage.getItem('preferred-language') || 'en';
-            setLanguage(savedLang);
-            
-            // Smooth scroll for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- Back to Top Button -->
+    <button id="backToTop" class="back-to-top" aria-label="Voltar ao topo">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/language.js"></script>
+    <script src="/assets/js/gallery.js"></script>
+    <script src="/assets/js/forms.js"></script>
 </body>
 </html>
