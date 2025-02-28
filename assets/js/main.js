@@ -79,7 +79,43 @@ const formHandler = {
         });
     }
 };
+// Image lazy loading
+document.addEventListener('DOMContentLoaded', function() {
+    // Lazy load images
+    const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+    
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy');
+                    observer.unobserve(img);
+                }
+            });
+        });
 
+        lazyImages.forEach(img => imageObserver.observe(img));
+    }
+
+    // Gallery image modal
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    galleryItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Create modal with full-size image
+            const modal = document.createElement('div');
+            modal.classList.add('modal');
+            const img = item.querySelector('img').cloneNode();
+            modal.appendChild(img);
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', () => {
+                modal.remove();
+            });
+        });
+    });
+});
 // Image lazy loading
 const lazyLoadHandler = {
     init: function() {
