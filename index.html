@@ -1,186 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Econectar - Native Bee Meliponiculture</title>
-    <style>
-        /* ... existing styles ... */
-
-        .language-selector {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .language-btn {
-            background: none;
-            border: 2px solid white;
-            color: white;
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .language-btn.active {
-            background: white;
-            color: var(--primary-color);
-        }
-
-        .sitemap {
-            margin: 2rem auto;
-            max-width: 1200px;
-            padding: 2rem;
-        }
-
-        .sitemap-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .sitemap-section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .sitemap-section h3 {
-            color: var(--secondary-color);
-            margin-bottom: 1rem;
-        }
-
-        .sitemap-section ul {
-            list-style: none;
-        }
-
-        .sitemap-section li {
-            margin-bottom: 0.5rem;
-        }
-
-        .sitemap-section a {
-            color: var(--text-color);
-            text-decoration: none;
-        }
-
-        .sitemap-section a:hover {
-            color: var(--primary-color);
-        }
-    </style>
+    <title>Econectar - Meliponicultura de Abelhas Nativas</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
     <header>
         <div class="language-selector">
-            <button class="language-btn active" data-lang="en">EN</button>
-            <button class="language-btn" data-lang="es">ES</button>
-            <button class="language-btn" data-lang="pt">PT</button>
+            <a href="/en/" class="language-btn">EN</a>
+            <a href="/es/" class="language-btn">ES</a>
+            <a href="/pt/" class="language-btn active">PT</a>
         </div>
         <h1>Econectar</h1>
-        <p class="tagline" data-en="Preserving Native Bees Through Meliponiculture"
-           data-es="Preservando Abejas Nativas a través de la Meliponicultura"
-           data-pt="Preservando Abelhas Nativas através da Meliponicultura">
-        </p>
+        <p>Preservando Abelhas Nativas através da Meliponicultura</p>
     </header>
 
     <nav>
         <ul>
-            <li><a href="#home" class="nav-link" 
-                   data-en="Home" 
-                   data-es="Inicio" 
-                   data-pt="Início">Home</a></li>
-            <li><a href="#about" class="nav-link"
-                   data-en="About"
-                   data-es="Sobre"
-                   data-pt="Sobre">About</a></li>
-            <li><a href="#services" class="nav-link"
-                   data-en="Services"
-                   data-es="Servicios"
-                   data-pt="Serviços">Services</a></li>
-            <li><a href="#contact" class="nav-link"
-                   data-en="Contact"
-                   data-es="Contacto"
-                   data-pt="Contato">Contact</a></li>
+            <li><a href="#home">Início</a></li>
+            <li><a href="#about">Sobre</a></li>
+            <li><a href="#services">Serviços</a></li>
+            <li><a href="#contact">Contato</a></li>
         </ul>
     </nav>
 
-    <section class="sitemap">
-        <h2>Site Map</h2>
-        <div class="sitemap-grid">
-            <div class="sitemap-section">
-                <h3>Main Pages</h3>
-                <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About Us</a></li>
-                    <li><a href="/services">Services</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                </ul>
-            </div>
-
-            <div class="sitemap-section">
-                <h3>Bee Species</h3>
-                <ul>
-                    <li><a href="/species/melipona">Melipona</a></li>
-                    <li><a href="/species/trigona">Trigona</a></li>
-                    <li><a href="/species/scaptotrigona">Scaptotrigona</a></li>
-                    <li><a href="/species/tetragonisca">Tetragonisca</a></li>
-                </ul>
-            </div>
-
-            <div class="sitemap-section">
-                <h3>Resources</h3>
-                <ul>
-                    <li><a href="/blog">Blog</a></li>
-                    <li><a href="/gallery">Photo Gallery</a></li>
-                    <li><a href="/research">Research</a></li>
-                    <li><a href="/publications">Publications</a></li>
-                </ul>
-            </div>
-
-            <div class="sitemap-section">
-                <h3>Community</h3>
-                <ul>
-                    <li><a href="/events">Events</a></li>
-                    <li><a href="/workshops">Workshops</a></li>
-                    <li><a href="/forum">Forum</a></li>
-                    <li><a href="/newsletter">Newsletter</a></li>
-                </ul>
-            </div>
-        </div>
+    <section class="hero">
+        <h2>Bem-vindos à Econectar</h2>
+        <p>Onde as abelhas nativas prosperam em harmonia com a natureza</p>
     </section>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const languageButtons = document.querySelectorAll('.language-btn');
-            
-            function changeLanguage(lang) {
-                // Update active button
-                languageButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.lang === lang) {
-                        btn.classList.add('active');
-                    }
-                });
+    <main class="content">
+        <section id="about">
+            <h2>Sobre a Econectar</h2>
+            <p>A Econectar é dedicada à preservação e cultivo de abelhas nativas sem ferrão através de práticas sustentáveis de meliponicultura. Trabalhamos com comunidades locais para proteger estes polinizadores essenciais e manter a biodiversidade.</p>
+        </section>
 
-                // Update content
-                document.querySelectorAll('[data-' + lang + ']').forEach(element => {
-                    const translation = element.getAttribute('data-' + lang);
-                    if (translation) {
-                        element.textContent = translation;
-                    }
-                });
-            }
+        <section class="features">
+            <div class="feature-card">
+                <h3>Conservação de Abelhas Nativas</h3>
+                <p>Conheça nossos esforços para proteger e preservar as espécies de abelhas nativas em seus habitats naturais.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Treinamento em Meliponicultura</h3>
+                <p>Participe de nossos workshops e aprenda práticas sustentáveis para a criação de abelhas sem ferrão.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Engajamento Comunitário</h3>
+                <p>Descubra como trabalhamos com as comunidades locais para promover a conservação das abelhas e práticas sustentáveis.</p>
+            </div>
+        </section>
+    </main>
 
-            languageButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    changeLanguage(btn.dataset.lang);
-                });
-            });
-        });
-    </script>
+    <footer>
+        <p>&copy; 2024 Econectar. Todos os direitos reservados.</p>
+    </footer>
 </body>
 </html>
