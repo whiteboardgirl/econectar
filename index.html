@@ -1,101 +1,734 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Econectar - Meliponicultura de Abelhas Nativas</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <title>Meliponiculture - Stingless Bees</title>
+    <meta name="description" content="Learn about stingless bees and meliponiculture - sustainable beekeeping practices for native bee species">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://stinglessbees.netlify.app/">
+    <meta property="og:title" content="Meliponiculture - Stingless Bees">
+    <meta property="og:description" content="Learn about stingless bees and sustainable beekeeping practices for native stingless bee species">
+    <meta property="og:image" content="https://stinglessbees.netlify.app/images/stingless-bee-cover.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://stinglessbees.netlify.app/">
+    <meta property="twitter:title" content="Meliponiculture - Stingless Bees">
+    <meta property="twitter:description" content="Learn about stingless bees and sustainable beekeeping practices for native stingless bee species">
+    <meta property="twitter:image" content="https://stinglessbees.netlify.app/images/stingless-bee-cover.jpg">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #ffc107;
+            --secondary-color: #795548;
+            --text-color: #333;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-color);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: var(--dark-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 50px;
+            margin-right: 10px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 20px;
+        }
+        
+        nav ul li a {
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        nav ul li a:hover {
+            color: white;
+        }
+        
+        .lang-selector {
+            display: flex;
+            align-items: center;
+        }
+        
+        .lang-btn {
+            background: none;
+            border: 1px solid var(--dark-color);
+            padding: 5px 10px;
+            margin-left: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+        
+        .lang-btn:hover, .lang-btn.active {
+            background-color: var(--dark-color);
+            color: white;
+        }
+        
+        .hero {
+            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/api/placeholder/1200/600');
+            background-size: cover;
+            background-position: center;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--dark-color);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #e0a800;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        section {
+            padding: 4rem 0;
+        }
+        
+        section h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--secondary-color);
+        }
+        
+        .about-content {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .about-text {
+            flex: 1;
+        }
+        
+        .about-image {
+            flex: 1;
+        }
+        
+        .about-image img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .species-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .species-card {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .species-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .species-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .species-card-content {
+            padding: 1.5rem;
+        }
+        
+        .species-card h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+        
+        .benefits {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .benefits-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .benefit-card {
+            text-align: center;
+            padding: 2rem;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .benefit-card:hover {
+            background-color: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
+        }
+        
+        .benefit-card i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .gallery-item {
+            overflow: hidden;
+            border-radius: 10px;
+            height: 250px;
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.3s;
+        }
+        
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+        
+        .cta {
+            background-color: var(--primary-color);
+            text-align: center;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background-color: var(--dark-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .social-links a:hover {
+            transform: translateY(-5px);
+            background-color: var(--secondary-color);
+        }
+        
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .footer-section ul li a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .footer-section ul li a:hover {
+            color: var(--primary-color);
+        }
+        
+        .copyright {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            nav ul {
+                margin-top: 1rem;
+                justify-content: center;
+            }
+            
+            nav ul li {
+                margin: 0 10px;
+            }
+            
+            .lang-selector {
+                margin-top: 1rem;
+                justify-content: center;
+            }
+            
+            .about-content {
+                flex-direction: column;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
-        <div class="language-selector">
-            <a href="/en/" class="language-btn">EN</a>
-            <a href="/es/" class="language-btn">ES</a>
-            <a href="/pt/" class="language-btn active">PT</a>
+        <div class="container header-content">
+            <div class="logo">
+                <img src="/api/placeholder/50/50" alt="Meliponiculture Logo">
+                <h1>MeliponicBees</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#about" class="text-en">About</a></li>
+                    <li><a href="#about" class="text-pt hidden">Sobre</a></li>
+                    <li><a href="#about" class="text-es hidden">Acerca</a></li>
+                    
+                    <li><a href="#species" class="text-en">Bee Species</a></li>
+                    <li><a href="#species" class="text-pt hidden">Espécies</a></li>
+                    <li><a href="#species" class="text-es hidden">Especies</a></li>
+                    
+                    <li><a href="#benefits" class="text-en">Benefits</a></li>
+                    <li><a href="#benefits" class="text-pt hidden">Benefícios</a></li>
+                    <li><a href="#benefits" class="text-es hidden">Beneficios</a></li>
+                    
+                    <li><a href="#gallery" class="text-en">Gallery</a></li>
+                    <li><a href="#gallery" class="text-pt hidden">Galeria</a></li>
+                    <li><a href="#gallery" class="text-es hidden">Galería</a></li>
+                    
+                    <li><a href="#contact" class="text-en">Contact</a></li>
+                    <li><a href="#contact" class="text-pt hidden">Contato</a></li>
+                    <li><a href="#contact" class="text-es hidden">Contacto</a></li>
+                </ul>
+            </nav>
+            <div class="lang-selector">
+                <button class="lang-btn active" data-lang="en">EN</button>
+                <button class="lang-btn" data-lang="pt">PT</button>
+                <button class="lang-btn" data-lang="es">ES</button>
+            </div>
         </div>
-        <h1>Econectar</h1>
-        <p>Preservando Abelhas Nativas através da Meliponicultura</p>
     </header>
 
-    <nav>
-        <ul>
-            <li><a href="#home">Início</a></li>
-            <li><a href="#about">Sobre</a></li>
-            <li><a href="#services">Serviços</a></li>
-            <li><a href="#contact">Contato</a></li>
-        </ul>
-    </nav>
-
     <section class="hero">
-        <h2>Bem-vindos à Econectar</h2>
-        <p>Onde as abelhas nativas prosperam em harmonia com a natureza</p>
+        <div class="container hero-content">
+            <h1 class="text-en">Discover the World of Stingless Bees</h1>
+            <h1 class="text-pt hidden">Descubra o Mundo das Abelhas sem Ferrão</h1>
+            <h1 class="text-es hidden">Descubre el Mundo de las Abejas sin Aguijón</h1>
+            
+            <p class="text-en">Learn about these fascinating pollinators and their importance for biodiversity and sustainable beekeeping</p>
+            <p class="text-pt hidden">Aprenda sobre esses fascinantes polinizadores e sua importância para a biodiversidade e meliponicultura sustentável</p>
+            <p class="text-es hidden">Aprende sobre estos fascinantes polinizadores y su importancia para la biodiversidad y la meliponicultura sostenible</p>
+            
+            <a href="#about" class="btn text-en">Learn More</a>
+            <a href="#about" class="btn text-pt hidden">Saiba Mais</a>
+            <a href="#about" class="btn text-es hidden">Más Información</a>
+        </div>
     </section>
 
-    <main class="content">
-        <section id="about">
-            <h2>Sobre a Econectar</h2>
-            <p>A Econectar é dedicada à preservação e cultivo de abelhas nativas sem ferrão através de práticas sustentáveis de meliponicultura. Trabalhamos com comunidades locais para proteger estes polinizadores essenciais e manter a biodiversidade.</p>
-        </section>
-
-        <section class="features">
-            <div class="feature-card">
-                <h3>Conservação de Abelhas Nativas</h3>
-                <p>Conheça nossos esforços para proteger e preservar as espécies de abelhas nativas em seus habitats naturais.</p>
+    <section id="about">
+        <div class="container">
+            <h2 class="text-en">About Stingless Bees</h2>
+            <h2 class="text-pt hidden">Sobre Abelhas sem Ferrão</h2>
+            <h2 class="text-es hidden">Acerca de las Abejas sin Aguijón</h2>
+            
+            <div class="about-content">
+                <div class="about-text">
+                    <p class="text-en">Stingless bees (Meliponini) are a large group of bees, comprising more than 500 species across tropical and subtropical regions. As their name suggests, these bees lack a functional stinger, making them safe for beekeeping in populated areas.</p>
+                    <p class="text-pt hidden">As abelhas sem ferrão (Meliponini) são um grande grupo de abelhas, compreendendo mais de 500 espécies em regiões tropicais e subtropicais. Como o nome sugere, essas abelhas não possuem ferrão funcional, tornando-as seguras para a criação em áreas povoadas.</p>
+                    <p class="text-es hidden">Las abejas sin aguijón (Meliponini) son un gran grupo de abejas, que comprende más de 500 especies en regiones tropicales y subtropicales. Como su nombre indica, estas abejas carecen de un aguijón funcional, lo que las hace seguras para la apicultura en áreas pobladas.</p>
+                    
+                    <p class="text-en">Meliponiculture is the practice of keeping stingless bees. This ancient technique has been practiced by indigenous cultures for thousands of years, particularly in the Americas, Australia, and Southeast Asia.</p>
+                    <p class="text-pt hidden">A meliponicultura é a prática de criação de abelhas sem ferrão. Esta técnica ancestral tem sido praticada por culturas indígenas há milhares de anos, particularmente nas Américas, Austrália e Sudeste Asiático.</p>
+                    <p class="text-es hidden">La meliponicultura es la práctica de criar abejas sin aguijón. Esta antigua técnica ha sido practicada por culturas indígenas durante miles de años, particularmente en las Américas, Australia y el Sudeste Asiático.</p>
+                    
+                    <p class="text-en">Unlike traditional honeybees, stingless bees are native to many tropical regions and are adapted to local ecosystems, making them crucial pollinators for many native plants and agricultural crops.</p>
+                    <p class="text-pt hidden">Diferente das abelhas melíferas tradicionais, as abelhas sem ferrão são nativas de muitas regiões tropicais e estão adaptadas aos ecossistemas locais, tornando-as polinizadores cruciais para muitas plantas nativas e culturas agrícolas.</p>
+                    <p class="text-es hidden">A diferencia de las abejas melíferas tradicionales, las abejas sin aguijón son nativas de muchas regiones tropicales y están adaptadas a los ecosistemas locales, lo que las convierte en polinizadores cruciales para muchas plantas nativas y cultivos agrícolas.</p>
+                </div>
+                <div class="about-image">
+                    <img src="/api/placeholder/500/300" alt="Stingless bee on flower">
+                </div>
             </div>
-            <div class="feature-card">
-                <h3>Treinamento em Meliponicultura</h3>
-                <p>Participe de nossos workshops e aprenda práticas sustentáveis para a criação de abelhas sem ferrão.</p>
-            </div>
-            <div class="feature-card">
-                <h3>Engajamento Comunitário</h3>
-                <p>Descubra como trabalhamos com as comunidades locais para promover a conservação das abelhas e práticas sustentáveis.</p>
-            </div>
-        </section>
-
-        <!-- Add this section to each language version -->
-<section id="gallery" class="gallery-section">
-    <div class="container">
-        <h2>Gallery</h2> <!-- Galeria/Galería -->
-        <div class="gallery-grid">
-            <!-- Meliponiculture Gallery -->
-            <figure class="gallery-item">
-                <img src="../assets/images/gallery/meliponiculture-1.jpg" 
-                     alt="Meliponiculture practice"
-                     loading="lazy"
-                     width="1200" 
-                     height="800">
-                <figcaption>Sustainable meliponiculture practices</figcaption>
-            </figure>
-
-            <!-- Native Bees Gallery -->
-            <figure class="gallery-item">
-                <img src="../assets/images/gallery/bees/melipona-1.jpg" 
-                     alt="Melipona bee"
-                     loading="lazy"
-                     width="1200" 
-                     height="800">
-                <figcaption>Melipona bee collecting pollen</figcaption>
-            </figure>
-
-            <!-- Hives Gallery -->
-            <figure class="gallery-item">
-                <img src="../assets/images/gallery/hives/hive-1.jpg" 
-                     alt="Traditional hive"
-                     loading="lazy"
-                     width="1200" 
-                     height="800">
-                <figcaption>Traditional stingless bee hive</figcaption>
-            </figure>
-
-            <!-- More gallery items -->
         </div>
-    </div>
-</section>
+    </section>
 
-    </main>
+    <section id="species">
+        <div class="container">
+            <h2 class="text-en">Common Stingless Bee Species</h2>
+            <h2 class="text-pt hidden">Espécies Comuns de Abelhas sem Ferrão</h2>
+            <h2 class="text-es hidden">Especies Comunes de Abejas sin Aguijón</h2>
+            
+            <div class="species-cards">
+                <div class="species-card">
+                    <img src="/api/placeholder/300/200" alt="Tetragonisca angustula">
+                    <div class="species-card-content">
+                        <h3>Tetragonisca angustula</h3>
+                        <p class="text-en">Commonly known as Jataí, this tiny bee is one of the most popular species for beginners in meliponiculture due to its docile nature and adaptability.</p>
+                        <p class="text-pt hidden">Comumente conhecida como Jataí, essa pequena abelha é uma das espécies mais populares para iniciantes na meliponicultura devido à sua natureza dócil e adaptabilidade.</p>
+                        <p class="text-es hidden">Comúnmente conocida como Jataí, esta pequeña abeja es una de las especies más populares para principiantes en meliponicultura debido a su naturaleza dócil y adaptabilidad.</p>
+                    </div>
+                </div>
+                
+                <div class="species-card">
+                    <img src="/api/placeholder/300/200" alt="Melipona quadrifasciata">
+                    <div class="species-card-content">
+                        <h3>Melipona quadrifasciata</h3>
+                        <p class="text-en">Known as Mandaçaia, this bee produces highly prized honey and is native to Brazil's Atlantic Forest region.</p>
+                        <p class="text-pt hidden">Conhecida como Mandaçaia, essa abelha produz mel altamente valorizado e é nativa da região da Mata Atlântica do Brasil.</p>
+                        <p class="text-es hidden">Conocida como Mandaçaia, esta abeja produce miel muy apreciada y es nativa de la región de la Mata Atlántica de Brasil.</p>
+                    </div>
+                </div>
+                
+                <div class="species-card">
+                    <img src="/api/placeholder/300/200" alt="Scaptotrigona postica">
+                    <div class="species-card-content">
+                        <h3>Scaptotrigona postica</h3>
+                        <p class="text-en">Called Tubi in Brazil, this species is known for its high productivity and defensive behavior, making it an interesting choice for experienced meliponiculturists.</p>
+                        <p class="text-pt hidden">Chamada de Tubi no Brasil, esta espécie é conhecida por sua alta produtividade e comportamento defensivo, tornando-a uma escolha interessante para meliponicultores experientes.</p>
+                        <p class="text-es hidden">Llamada Tubi en Brasil, esta especie es conocida por su alta productividad y comportamiento defensivo, lo que la convierte en una opción interesante para meliponicultores experimentados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="benefits" class="benefits">
+        <div class="container">
+            <h2 class="text-en">Benefits of Meliponiculture</h2>
+            <h2 class="text-pt hidden">Benefícios da Meliponicultura</h2>
+            <h2 class="text-es hidden">Beneficios de la Meliponicultura</h2>
+            
+            <div class="benefits-content">
+                <div class="benefit-card">
+                    <i class="fas fa-leaf"></i>
+                    <h3 class="text-en">Ecological</h3>
+                    <h3 class="text-pt hidden">Ecológico</h3>
+                    <h3 class="text-es hidden">Ecológico</h3>
+                    <p class="text-en">Helps conserve native bee species and supports local biodiversity through natural pollination.</p>
+                    <p class="text-pt hidden">Ajuda a conservar espécies nativas de abelhas e apoia a biodiversidade local através da polinização natural.</p>
+                    <p class="text-es hidden">Ayuda a conservar especies nativas de abejas y apoya la biodiversidad local a través de la polinización natural.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <i class="fas fa-tint"></i>
+                    <h3 class="text-en">Medicinal Honey</h3>
+                    <h3 class="text-pt hidden">Mel Medicinal</h3>
+                    <h3 class="text-es hidden">Miel Medicinal</h3>
+                    <p class="text-en">Stingless bee honey has unique properties and is used in traditional medicine across many cultures.</p>
+                    <p class="text-pt hidden">O mel de abelhas sem ferrão tem propriedades únicas e é usado na medicina tradicional em várias culturas.</p>
+                    <p class="text-es hidden">La miel de abejas sin aguijón tiene propiedades únicas y se utiliza en la medicina tradicional en muchas culturas.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <i class="fas fa-hands-helping"></i>
+                    <h3 class="text-en">Community Development</h3>
+                    <h3 class="text-pt hidden">Desenvolvimento Comunitário</h3>
+                    <h3 class="text-es hidden">Desarrollo Comunitario</h3>
+                    <p class="text-en">Provides sustainable income for rural communities without requiring large investments.</p>
+                    <p class="text-pt hidden">Proporciona renda sustentável para comunidades rurais sem exigir grandes investimentos.</p>
+                    <p class="text-es hidden">Proporciona ingresos sostenibles para comunidades rurales sin requerir grandes inversiones.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <i class="fas fa-seedling"></i>
+                    <h3 class="text-en">Agricultural Productivity</h3>
+                    <h3 class="text-pt hidden">Produtividade Agrícola</h3>
+                    <h3 class="text-es hidden">Productividad Agrícola</h3>
+                    <p class="text-en">Improves crop yields through effective pollination, especially for native fruit trees.</p>
+                    <p class="text-pt hidden">Melhora o rendimento das colheitas através de polinização eficaz, especialmente para árvores frutíferas nativas.</p>
+                    <p class="text-es hidden">Mejora el rendimiento de los cultivos a través de una polinización eficaz, especialmente para árboles frutales nativos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="gallery">
+        <div class="container">
+            <h2 class="text-en">Gallery</h2>
+            <h2 class="text-pt hidden">Galeria</h2>
+            <h2 class="text-es hidden">Galería</h2>
+            
+            <div class="gallery">
+                <div class="gallery-item">
+                    <img src="/api/placeholder/300/300" alt="Stingless bee hive">
+                </div>
+                <div class="gallery-item">
+                    <img src="/api/placeholder/300/300" alt="Stingless bee on flower">
+                </div>
+                <div class="gallery-item">
+                    <img src="/api/placeholder/300/300" alt="Stingless bee honey harvest">
+                </div>
+                <div class="gallery-item">
+                    <img src="/api/placeholder/300/300" alt="Meliponiculture workshop">
+                </div>
+                <div class="gallery-item">
+                    <img src="/api/placeholder/300/300" alt="Traditional hive designs">
+                </div>
+                <div class="gallery-item">
+                    <img src="/api/placeholder/300/300" alt="Stingless bee entrance">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="cta">
+        <div class="container">
+            <h2 class="text-en">Join Our Community</h2>
+            <h2 class="text-pt hidden">Junte-se à Nossa Comunidade</h2>
+            <h2 class="text-es hidden">Únete a Nuestra Comunidad</h2>
+            
+            <p class="text-en">Connect with other meliponiculturists, share experiences, and learn together!</p>
+            <p class="text-pt hidden">Conecte-se com outros meliponicultores, compartilhe experiências e aprenda junto!</p>
+            <p class="text-es hidden">¡Conéctate con otros meliponicultores, comparte experiencias y aprende junto!</p>
+            
+            <div class="social-links">
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </section>
 
     <footer>
-        <p>&copy; 2024 Econectar. Todos os direitos reservados.</p>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="text-en">Quick Links</h3>
+                    <h3 class="text-pt hidden">Links Rápidos</h3>
+                    <h3 class="text-es hidden">Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="#about" class="text-en">About</a></li>
+                        <li><a href="#about" class="text-pt hidden">Sobre</a></li>
+                        <li><a href="#about" class="text-es hidden">Acerca de</a></li>
+                        
+                        <li><a href="#species" class="text-en">Bee Species</a></li>
+                        <li><a href="#species" class="text-pt hidden">Espécies de Abelhas</a></li>
+                        <li><a href="#species" class="text-es hidden">Especies de Abejas</a></li>
+                        
+                        <li><a href="#benefits" class="text-en">Benefits</a></li>
+                        <li><a href="#benefits" class="text-pt hidden">Benefícios</a></li>
+                        <li><a href="#benefits" class="text-es hidden">Beneficios</a></li>
+                        
+                        <li><a href="#gallery" class="text-en">Gallery</a></li>
+                        <li><a href="#gallery" class="text-pt hidden">Galeria</a></li>
+                        <li><a href="#gallery" class="text-es hidden">Galería</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 class="text-en">Resources</h3>
+                    <h3 class="text-pt hidden">Recursos</h3>
+                    <h3 class="text-es hidden">Recursos</h3>
+                    <ul>
+                        <li><a href="#" class="text-en">Starter Guide</a></li>
+                        <li><a href="#" class="text-pt hidden">Guia para Iniciantes</a></li>
+                        <li><a href="#" class="text-es hidden">Guía para Principiantes</a></li>
+                        
+                        <li><a href="#" class="text-en">Hive Designs</a></li>
+                        <li><a href="#" class="text-pt hidden">Modelos de Colmeias</a></li>
+                        <li><a href="#" class="text-es hidden">Diseños de Colmenas                        <li><a href="#" class="text-es hidden">Diseños de Colmenas</a></li>
+                        
+                        <li><a href="#" class="text-en">Best Practices</a></li>
+                        <li><a href="#" class="text-pt hidden">Boas Práticas</a></li>
+                        <li><a href="#" class="text-es hidden">Buenas Prácticas</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 class="text-en">Contact</h3>
+                    <h3 class="text-pt hidden">Contato</h3>
+                    <h3 class="text-es hidden">Contacto</h3>
+                    <ul>
+                        <li>Email: info@meliponicbees.com</li>
+                        <li class="text-en">Phone: +1 234 567 890</li>
+                        <li class="text-pt hidden">Telefone: +1 234 567 890</li>
+                        <li class="text-es hidden">Teléfono: +1 234 567 890</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2024 MeliponicBees. <span class="text-en">All rights reserved.</span><span class="text-pt hidden">Todos os direitos reservados.</span><span class="text-es hidden">Todos los derechos reservados.</span></p>
+            </div>
+        </div>
     </footer>
+
+    <script>
+        // Language switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const langButtons = document.querySelectorAll('.lang-btn');
+            
+            function setLanguage(lang) {
+                // Hide all language elements
+                document.querySelectorAll('[class*="text-"]').forEach(el => {
+                    el.classList.add('hidden');
+                });
+                
+                // Show selected language elements
+                document.querySelectorAll(`.text-${lang}`).forEach(el => {
+                    el.classList.remove('hidden');
+                });
+                
+                // Update active state of language buttons
+                langButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Store language preference
+                localStorage.setItem('preferred-language', lang);
+            }
+            
+            // Language button click handlers
+            langButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setLanguage(btn.dataset.lang);
+                });
+            });
+            
+            // Set initial language
+            const savedLang = localStorage.getItem('preferred-language') || 'en';
+            setLanguage(savedLang);
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
