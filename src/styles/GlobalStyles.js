@@ -8,7 +8,9 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+    background-color: #f9f9f9;
   }
 `
 
