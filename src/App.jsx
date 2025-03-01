@@ -1,26 +1,28 @@
-import { styled } from 'styled-components'
-
-const Container = styled.div`
-  min-height: 100vh;
-  background-color: #2E7D32;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-`
-
-const Title = styled.h1`
-  font-size: 3rem;
-  margin-bottom: 1rem;
-`
-
 function App() {
   return (
-    <Container>
-      <Title>Econectar</Title>
-    </Container>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#2E7D32',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center'
+    }}>
+      <h1 style={{
+        fontSize: '3rem',
+        marginBottom: '1rem'
+      }}>
+        Econectar
+      </h1>
+      <p style={{
+        fontSize: '1.5rem',
+        marginBottom: '2rem'
+      }}>
+        Conectando pessoas e abelhas nativas
+      </p>
+    </div>
   )
 }
 
