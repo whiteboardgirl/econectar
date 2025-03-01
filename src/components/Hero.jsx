@@ -2,12 +2,6 @@ import styled from 'styled-components'
 import heroBg from '../assets/images/hero-bg2.jpg'  // Add this import
 
 const HeroSection = styled.section`
-  // ... existing code ...
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroBg});
-  // ... existing code ...
-`
-
-const HeroSection = styled.section`
   height: 100vh;
   display: flex;
   flex-direction: column;
