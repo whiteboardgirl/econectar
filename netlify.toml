@@ -2,10 +2,7 @@
   command = "npm run build"
   publish = "dist"
 
-[dev]
-  command = "npm run dev"
-  port = 5173
-  targetPort = 5173
-
-[[plugins]]
-  package = "@netlify/plugin-visual"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
