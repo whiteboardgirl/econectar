@@ -89,7 +89,7 @@ const Hero = () => {
   
   return (
     <HeroSection id="home">
-      <Title>Discover the World of Stingless Bees</Title>
+      <Title>Discover the World of Latinoamerican Stingless Bees</Title>
       <Subtitle>
         Join us in our mission to protect these remarkable pollinators and their vital contribution to biodiversity
       </Subtitle>
