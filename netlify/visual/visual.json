@@ -1,0 +1,12 @@
+{
+  "siteUrl": "https://econectar.netlify.app",
+  "contentSources": [
+    {
+      "name": "Static Content",
+      "adapter": {
+        "name": "static-content"
+      }
+    }
+  ],
+  "pathPrefix": ""
+}
