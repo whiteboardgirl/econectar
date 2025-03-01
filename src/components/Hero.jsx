@@ -1,5 +1,4 @@
 import styled from 'styled-components'
-import heroBg from '../assets/images/hero-bg2.jpg'  // Add this import
 
 const HeroSection = styled.section`
   height: 100vh;
