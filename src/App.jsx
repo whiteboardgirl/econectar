@@ -1,4 +1,5 @@
 import Header from './components/Header'
+import About from './components/About'
 
 // Honey color palette
 const colors = {
